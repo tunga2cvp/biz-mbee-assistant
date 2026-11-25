@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<!--
+  Copyright 2026 Google LLC
+  SPDX-License-Identifier: Apache-2.0
+-->
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>[DEBUG ONLY] WebMCP Backend Server Logs</title>
+  <style>
+    :root {
+      --bg: #f8fafe;
+      --card: #ffffff;
+      --border: #e1e3e1;
+      --text: #1c1917;
+      --text-muted: #727676;
+      --accent: #0b57d0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    .debug-banner {
+      background: #fff3cd;
+      color: #856404;
+      border-bottom: 1px solid #ffeeba;
+      padding: 10px 20px;
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .header {
+      background: #ffffff;
+      border-bottom: 1px solid var(--border);
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .header-title {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-weight: 700;
+      font-size: 16px;
+      color: #001944;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .status-pill {
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-pill.online {
+      background: #e6f4ea;
+      color: #137333;
+    }
+
+    .status-pill.offline {
+      background: #fef7e0;
+      color: #b06000;
+    }
+
+
+    .logs-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .empty-state {
+      margin: auto;
+      text-align: center;
+      color: var(--text-muted);
+      padding: 40px;
+    }
+
+    .log-card {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #ffffff;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 12px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+      overflow: hidden;
+    }
+
+    .log-summary {
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      background: #ffffff;
+    }
+
+    .method-badge {
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 11px;
+    }
+
+    .method-badge.post {
+      background: #e8f0fe;
+      color: #1a73e8;
+    }
+
+    .method-badge.get {
+      background: #e6f4ea;
+      color: #137333;
+    }
+
+    .status-badge {
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 11px;
+    }
+
+    .status-badge.ok {
+      background: #e6f4ea;
+      color: #137333;
+    }
+
+    .status-badge.err {
+      background: #fce8e6;
+      color: #c5221f;
+    }
+
+    .log-details {
+      padding: 12px 14px;
+      border-top: 1px solid var(--border);
+      background: #fafafa;
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .log-card.expanded .log-details {
+      display: flex;
+    }
+
+    .log-card.expanded .log-summary {
+      background: #f1f5f9;
+    }
+
+    pre {
+      margin: 4px 0 0;
+      padding: 10px;
+      background: #ffffff;
+      border: 1px solid #e1e3e1;
+      border-radius: 6px;
+      overflow-x: auto;
+      font-size: 11px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .footer {
+      padding: 10px 20px;
+      border-top: 1px solid var(--border);
+      background: #ffffff;
+      font-size: 12px;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="debug-banner">
+    <div>⚠️ <strong>DEBUG ENVIRONMENT ONLY:</strong> This live log server inspector is intended solely for local debugging and development.</div>
+  </div>
+  <div class="header">
+    <div class="header-title">
+      <span>🖥️ WEBMCP BACKEND SERVER CALL LOGS</span>
+      <span id="statusPill" class="status-pill offline">OFFLINE</span>
+    </div>
+    <label style="font-size: 12px; cursor: pointer; user-select: none;">
+      <input type="checkbox" id="autoScroll" checked /> Auto-scroll
+    </label>
+  </div>
+  <div id="logsContainer" class="logs-container">
+    <div id="authError" class="empty-state" style="display: none;">
+      <h3 style="margin: 0 0 6px;">🔒 Not authorized</h3>
+      <p style="margin: 0; font-size: 13px;">
+        This dashboard requires the server auth token. Open the
+        <code>/logs?token=...</code> URL printed in the server console on startup.
+      </p>
+    </div>
+    <div id="emptyState" class="empty-state">
+      <h3 style="margin: 0 0 6px;">No server call logs recorded yet</h3>
+      <p style="margin: 0; font-size: 13px;">Make API calls to the backend from the WebMCP extension to watch live request &amp; response activity here.</p>
+    </div>
+    <div id="logsList" style="display: flex; flex-direction: column; gap: 10px;"></div>
+  </div>
+  <div class="footer">
+    <span>Stream Endpoint: <code>GET /logs?stream=true</code></span>
+    <span id="logCounter">0 entries recorded</span>
+  </div>
+
+  <script type="module" nonce="__CSP_NONCE__">
+    let logs = [];
+    const expandedIds = new Set();
+
+    function formatTime(isoString) {
+      if (!isoString) return '';
+      try {
+        const d = new Date(isoString);
+        return d.toLocaleTimeString('en-GB', { hour12: false }) + '.' + String(d.getMilliseconds()).padStart(3, '0');
+      } catch { return String(isoString); }
+    }
+
+    /**
+     * Creates an element with optional class, inline style and text content.
+     * Text is always assigned via textContent, never parsed as HTML.
+     */
+    function el(tag, { className, style, text } = {}) {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      if (style) node.setAttribute('style', style);
+      if (text !== undefined) node.textContent = String(text);
+      return node;
+    }
+
+    /**
+     * Renders one payload section. `value` originates from arbitrary web pages
+     * (tool names, descriptions and results), so it is stringified and then
+     * assigned as text — it must never reach an HTML parser.
+     */
+    function payloadSection(label, value) {
+      const wrapper = el('div');
+      wrapper.appendChild(el('div', {
+        style: 'font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;',
+        text: label,
+      }));
+
+      let serialized;
+      try {
+        // Always stringify, matching the previous renderer: a string payload
+        // renders with its surrounding quotes rather than as bare text.
+        serialized = JSON.stringify(value, null, 2);
+      } catch {
+        serialized = '[unserializable payload]';
+      }
+
+      wrapper.appendChild(el('pre', { text: serialized }));
+      return wrapper;
+    }
+
+    function buildLogCard(log) {
+      const method = (log.method || 'GET').toUpperCase();
+      const path = log.path || '';
+      const statusCode = log.statusCode || 200;
+      const durationMs = log.durationMs !== undefined ? log.durationMs : 0;
+      const isSuccess = statusCode >= 200 && statusCode < 300;
+
+      const card = el('div', { className: 'log-card' });
+      if (expandedIds.has(log.id)) card.classList.add('expanded');
+
+      const summary = el('div', { className: 'log-summary' });
+      summary.addEventListener('click', () => {
+        if (expandedIds.has(log.id)) {
+          expandedIds.delete(log.id);
+        } else {
+          expandedIds.add(log.id);
+        }
+        card.classList.toggle('expanded');
+      });
+
+      const left = el('div', { style: 'display: flex; align-items: center; gap: 10px;' });
+      left.appendChild(el('span', {
+        style: 'color: var(--text-muted); font-size: 11px;',
+        text: formatTime(log.timestamp || ''),
+      }));
+      left.appendChild(el('span', { className: 'method-badge ' + method.toLowerCase(), text: method }));
+      left.appendChild(el('span', { style: 'font-weight: 600;', text: path }));
+
+      const right = el('div', { style: 'display: flex; align-items: center; gap: 10px;' });
+      right.appendChild(el('span', {
+        className: 'status-badge ' + (isSuccess ? 'ok' : 'err'),
+        text: statusCode,
+      }));
+      right.appendChild(el('span', { style: 'color: var(--text-muted);', text: durationMs + 'ms' }));
+      right.appendChild(el('span', { style: 'color: #80868b;', text: '▼' }));
+
+      summary.appendChild(left);
+      summary.appendChild(right);
+      card.appendChild(summary);
+
+      const details = el('div', { className: 'log-details' });
+      if (log.error) {
+        details.appendChild(el('div', {
+          style: 'padding: 8px; background: #fce8e6; color: #c5221f; border-radius: 6px; font-weight: 600;',
+          text: 'Error: ' + log.error,
+        }));
+      }
+      if (log.requestPayload !== undefined && log.requestPayload !== null) {
+        details.appendChild(payloadSection('Request Payload', log.requestPayload));
+      }
+      if (log.responsePayload !== undefined && log.responsePayload !== null) {
+        details.appendChild(payloadSection('Response Payload', log.responsePayload));
+      }
+      card.appendChild(details);
+
+      return card;
+    }
+
+    function renderLogs() {
+      const container = document.getElementById('logsContainer');
+      const logsList = document.getElementById('logsList');
+      const emptyState = document.getElementById('emptyState');
+      const counter = document.getElementById('logCounter');
+
+      counter.textContent = logs.length + ' entries recorded';
+
+      logsList.replaceChildren();
+
+      if (logs.length === 0) {
+        emptyState.style.display = 'block';
+        return;
+      }
+
+      emptyState.style.display = 'none';
+
+      const fragment = document.createDocumentFragment();
+      for (const log of logs) {
+        if (!log) continue;
+        fragment.appendChild(buildLogCard(log));
+      }
+      logsList.appendChild(fragment);
+
+      if (document.getElementById('autoScroll')?.checked) {
+        container.scrollTop = container.scrollHeight;
+      }
+    }
+
+    function showAuthError() {
+      document.getElementById('authError').style.display = 'block';
+      document.getElementById('emptyState').style.display = 'none';
+      const pill = document.getElementById('statusPill');
+      pill.textContent = 'UNAUTHORIZED';
+      pill.className = 'status-pill offline';
+    }
+
+    async function loadInitialLogs() {
+      try {
+        const res = await fetch('/logs?json=true');
+        if (res.status === 401) {
+          showAuthError();
+          return false;
+        }
+        const data = await res.json();
+        // Assign to the module-level `logs`; this used to be destructured into a
+        // local of the same name, so the fetched entries were silently dropped.
+        logs = Array.isArray(data.logs) ? data.logs : [];
+        renderLogs();
+        return true;
+      } catch (e) {
+        console.error('Failed to fetch initial logs:', e);
+        return true;
+      }
+    }
+
+    function connectSSE() {
+      const pill = document.getElementById('statusPill');
+      const es = new EventSource('/logs?stream=true');
+      es.onopen = () => {
+        pill.textContent = 'LIVE STREAMING';
+        pill.className = 'status-pill online';
+      };
+      es.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === 'init') {
+            logs = Array.isArray(data.logs) ? data.logs : [];
+          } else if (data.type === 'log' && data.log) {
+            logs.push(data.log);
+            if (logs.length > 500) logs.shift();
+          }
+          renderLogs();
+        } catch (e) { console.error('SSE parse error:', e); }
+      };
+      es.onerror = () => {
+        pill.textContent = 'OFFLINE (RECONNECTING...)';
+        pill.className = 'status-pill offline';
+      };
+    }
+
+    if (await loadInitialLogs()) connectSSE();
+  </script>
+</body>
+</html>

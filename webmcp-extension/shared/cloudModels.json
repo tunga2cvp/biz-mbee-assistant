@@ -1,0 +1,7 @@
+{
+  "defaultModel": "@cf/qwen/qwen3.8-27b",
+  "models": [
+    { "id": "@cf/qwen/qwen3.8-27b", "label": "Qwen 3.8 27B", "description": "Mặc định · hội thoại và tác vụ nhiều bước", "adapter": "openai" },
+    { "id": "@cf/ibm-granite/granite-4.0-h-micro", "label": "Granite 4.0 H Micro · 3B", "description": "Model nhỏ · thử nghiệm gọi công cụ", "adapter": "openai" }
+  ]
+}

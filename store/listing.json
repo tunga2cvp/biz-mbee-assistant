@@ -1,0 +1,44 @@
+{
+  "name": "BIZ Mbee Assistant",
+  "version": "1.2.1",
+  "language": "vi",
+  "publisherType": "personal",
+  "publisherTraderStatus": "non-trader",
+  "extensionId": "opifljgebjckcihkflechmdolimljfln",
+  "supportEmail": "thanhtunga2cvp@gmail.com",
+  "privacyUrl": "https://biz.thanhtunga2cvp.workers.dev/privacy",
+  "demoUrl": "https://biz.thanhtunga2cvp.workers.dev/demo",
+  "shortDescription": "Trợ lý WebMCP có đăng nhập: chat tiếng Việt, khám phá công cụ của trang và thực hiện sau khi được cho phép.",
+  "description": "BIZ Mbee Assistant là tiện ích thử nghiệm WebMCP do cá nhân phát triển. Đăng nhập bằng tài khoản trợ lý được cấp để chat tiếng Việt và làm việc với các công cụ do website công bố.\n\n• Tự khám phá metadata công cụ WebMCP trên tab hiện tại và cập nhật khi trang thay đổi.\n• Model AI chọn công cụ và tham số từ yêu cầu tự nhiên, hỏi lại khi thiếu dữ liệu.\n• Kiểm tra quyền trước thao tác thay đổi trang và giữ xác nhận với thao tác có hậu quả.\n• Giữ hội thoại riêng theo tab; đăng xuất xóa phiên và hội thoại trên trình duyệt.\n• Xử lý AI trên Cloudflare, không yêu cầu server Node trên máy người dùng.\n• Chọn model Qwen 3.8 27B hoặc Granite 4.0 H Micro 3B; đổi model bắt đầu hội thoại mới.\n• Theo dõi token đầu vào, đầu ra và tổng theo từng model trong phiên panel, gồm cả các lượt gọi công cụ.\n\nYêu cầu Chrome 155+ có WebMCP native. Trên phiên bản thử nghiệm có thể cần bật WebMCP testing trong chrome://flags. Tiện ích chỉ làm việc với website công bố công cụ WebMCP tương thích.\n\nTrang demo với dữ liệu giả: https://biz.thanhtunga2cvp.workers.dev/demo\n\nKhông nhập mật khẩu ngân hàng, OTP, PIN hoặc dữ liệu khách hàng vào chat thử nghiệm. Tiện ích này do cá nhân phát triển; thông tin nhà phát hành được ghi trong hồ sơ Store.\n\nKhi chat, nội dung hội thoại, mô tả công cụ và kết quả công cụ được gửi tới Cloudflare Workers AI. Xem chính sách riêng tư: https://biz.thanhtunga2cvp.workers.dev/privacy\n\nHỗ trợ: thanhtunga2cvp@gmail.com",
+  "singlePurpose": "Trợ lý WebMCP có xác thực để người dùng gọi công cụ do website công bố bằng hội thoại tự nhiên và kiểm soát quyền thực hiện.",
+  "permissionJustifications": {
+    "sidePanel": "Hiển thị màn hình đăng nhập, hội thoại và xác nhận công cụ cạnh tab đang làm việc.",
+    "storage": "Giữ token phiên có thời hạn trong chrome.storage.session; không lưu mật khẩu.",
+    "scripting": "Chạy bridge được đóng gói trong extension để kết nối document.modelContext native của trang và thực hiện công cụ đã kiểm tra quyền.",
+    "webNavigation": "Theo dõi điều hướng và các frame để cập nhật công cụ WebMCP khi trang thay đổi.",
+    "favicon": "Hiển thị biểu tượng tab gắn với hội thoại.",
+    "hostPermissions": "Khám phá và gọi WebMCP trên website người dùng đang làm việc, gồm các frame được website cho phép; ứng dụng hỗ trợ nhiều website công bố WebMCP, không giới hạn ở một domain."
+  },
+  "remoteCode": "Không tải hoặc thực thi mã JavaScript từ xa. AI chỉ trả nội dung và tool calls; mọi mã extension được đóng gói trong ZIP, callback thuộc website chạy qua WebMCP native.",
+  "dataHandled": [
+    "authentication information",
+    "user-provided chat content",
+    "website tool metadata and tool results",
+    "account username",
+    "operational IP metadata"
+  ],
+  "storeDataDeclarations": [
+    "personally identifiable information",
+    "authentication information",
+    "personal communications",
+    "location (operational IP address)",
+    "website content"
+  ],
+  "storeCategory": "Productivity / Tools",
+  "storeVisibility": "public",
+  "storePrice": "free",
+  "screenshots": [
+    "login-1280x800.png",
+    "consent-1280x800.png"
+  ]
+}

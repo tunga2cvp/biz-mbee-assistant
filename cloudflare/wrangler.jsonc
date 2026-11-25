@@ -1,0 +1,8 @@
+{
+  "name": "biz",
+  "main": "worker.js",
+  "compatibility_date": "2026-11-19",
+  "ai": { "binding": "AI" },
+  "ratelimits": [{ "name": "EXTENSION_RATE_LIMITER", "namespace_id": "750101", "simple": { "limit": 10, "period": 60 } }],
+  "observability": { "enabled": false }
+}

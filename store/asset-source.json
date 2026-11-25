@@ -1,0 +1,9 @@
+{
+  "reference": "https://www.instagram.com/p/CYYAQKHrgGe/",
+  "referenceCreator": "thaachle",
+  "referenceCaption": "Bee ~ MB Bank",
+  "avatar": "mbee-avatar.png",
+  "method": "Built-in image_gen edit, then deterministic PNG size export",
+  "prompt": "Preserve the reference yellow 3D bee identity, headset and antennae; remove video play overlay and blue background; make a centered transparent avatar of head and upper torso with no text.",
+  "publisherDescription": "Personal experimental WebMCP assistant; no claim of official bank publication."
+}

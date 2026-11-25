@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="vi">
+  <meta charset="utf-8" />
+  <title>WebMCP external-agent test</title>
+  <style>
+    body {
+      max-width: 760px;
+      margin: 40px auto;
+      padding: 20px;
+      font: 16px Arial;
+    }
+    label {
+      display: block;
+      margin: 16px 0;
+    }
+    input,
+    button {
+      padding: 10px;
+      margin: 4px;
+    }
+    pre {
+      white-space: pre-wrap;
+      background: #eef2ff;
+      padding: 16px;
+    }
+  </style>
+  <h1>Trang kiểm thử WebMCP độc lập</h1>
+  <p>Chỉ dữ liệu giả. Không đăng nhập, không backend, không giao dịch.</p>
+  <label>
+    Mã đơn vị thử nghiệm
+    <input id="unit" autocomplete="off" />
+  </label>
+  <label>
+    Tên người dùng thử nghiệm
+    <input id="user" autocomplete="off" />
+  </label>
+  <button id="extra">Công bố thêm một tool mới</button>
+  <button id="disable">Gỡ toàn bộ tool</button>
+  <pre id="status">Đang kiểm tra native WebMCP…</pre>
+  <script type="module">
+    const status = document.querySelector('#status');
+    const context = document.modelContext;
+    const controllers = [];
+    const log = (text) => {
+      status.textContent = text;
+    };
+    async function expose(tool) {
+      const controller = new AbortController();
+      await context.registerTool(tool, { signal: controller.signal });
+      controllers.push(controller);
+    }
+    if (!context?.registerTool || !context?.getTools) {
+      log('Không có API native. Bật WebMCP testing và mở trang bằng localhost. Không dùng polyfill.');
+    } else {
+      await expose({
+        name: 'explain_test_workspace',
+        description: 'Describe the current independent demo page and available preparation task. Read only.',
+        inputSchema: { type: 'object', properties: {}, additionalProperties: false },
+        annotations: { readOnlyHint: true, consequentialHint: false, untrustedContentHint: false },
+        execute: () =>
+          JSON.stringify({
+            page: 'Independent WebMCP test',
+            capabilities: ['Prepare a demo unit code and demo username in the visible form'],
+            safety: 'No authentication, passwords or backend calls.',
+          }),
+      });
+      await expose({
+        name: 'stage_demo_identity',
+        description: 'Fill the visible demo form using a unit code and username supplied by the user. Ask for any missing field, never invent a value. Does not authenticate or submit.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            unitCode: { type: 'string', minLength: 3, maxLength: 30 },
+            userName: { type: 'string', minLength: 3, maxLength: 40 },
+          },
+          required: ['unitCode', 'userName'],
+          additionalProperties: false,
+        },
+        annotations: { readOnlyHint: false, consequentialHint: false, untrustedContentHint: false },
+        execute: (args) => {
+          if (!args || Object.keys(args).some((k) => !['unitCode', 'userName'].includes(k)) || typeof args.unitCode !== 'string' || typeof args.userName !== 'string' || !/^[A-Za-z0-9_-]{3,30}$/.test(args.unitCode) || !/^[A-Za-z0-9_-]{3,40}$/.test(args.userName)) {
+            throw new Error('Need explicit valid demo unitCode and userName.');
+          }
+          document.querySelector('#unit').value = args.unitCode;
+          document.querySelector('#user').value = args.userName;
+          log('Callback native đã điền hai ô. Không có đăng nhập/gửi dữ liệu.');
+          return JSON.stringify({ status: 'filled', unitCode: args.unitCode, userName: args.userName });
+        },
+      });
+      document.querySelector('#extra').onclick = async (event) => {
+        event.currentTarget.disabled = true;
+        await expose({
+          name: 'calculate_demo_total',
+          description: 'Calculate the total demo cost from the quantity and unit price the user provides. Read only, no purchase.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              quantity: { type: 'integer', minimum: 1, maximum: 1000 },
+              unitPrice: { type: 'integer', minimum: 0, maximum: 1000000 },
+            },
+            required: ['quantity', 'unitPrice'],
+            additionalProperties: false,
+          },
+          annotations: { readOnlyHint: true, consequentialHint: false, untrustedContentHint: false },
+          execute: (args) => {
+            if (!args || !Number.isInteger(args.quantity) || args.quantity < 1 || args.quantity > 1000 || !Number.isInteger(args.unitPrice) || args.unitPrice < 0 || args.unitPrice > 1000000 || Object.keys(args).some((k) => !['quantity', 'unitPrice'].includes(k))) {
+              throw new Error('Invalid demo quantity/unitPrice.');
+            }
+            return JSON.stringify({ total: args.quantity * args.unitPrice });
+          },
+        });
+        log('Đã công bố tool mới. Agent phải tự cập nhật, không sửa code agent.');
+      };
+      document.querySelector('#disable').onclick = () => {
+        controllers.forEach((controller) => controller.abort());
+        document.querySelector('#extra').disabled = true;
+        log('Đã gỡ toàn bộ tool. Không có fallback vào DOM hoặc registry nội bộ.');
+      };
+      log('Hai tool native đã sẵn sàng. Mở extension và chat.');
+    }
+  </script>
+</html>

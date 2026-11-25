@@ -1,0 +1,218 @@
+diff --git a/.gitignore b/.gitignore
+index 755eedf..419999e 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -6,6 +6,7 @@ node_modules/
+ 
+ # Build outputs
+ dist/
++store-dist/
+ 
+ # Operating System files
+ .DS_Store
+diff --git a/extension/manifest.json b/extension/manifest.json
+index b7cff1c..70194b0 100644
+--- a/extension/manifest.json
++++ b/extension/manifest.json
+@@ -6,6 +6,7 @@
+   "minimum_chrome_version": "155.0.8052.0",
+   "permissions": [
+     "sidePanel",
++    "storage",
+     "scripting",
+     "webNavigation",
+     "favicon"
+@@ -48,4 +49,4 @@
+       ]
+     }
+   ]
+-}
+\ No newline at end of file
++}
+diff --git a/extension/sidepanel/App.tsx b/extension/sidepanel/App.tsx
+index 17bdfca..eac583e 100644
+--- a/extension/sidepanel/App.tsx
++++ b/extension/sidepanel/App.tsx
+@@ -14,6 +14,12 @@ import { ActionLog } from './components/ActionLog.js';
+ import { OnDeviceModelStatus } from './components/OnDeviceModelStatus.js';
+ import { ContextMeter } from './components/ContextMeter.js';
+ import { EditSquareIcon } from './components/Icons.js';
++import { AuthGate } from './screens/AuthGate.js';
++import { TokenUsage } from './components/TokenUsage.js';
++import { CLOUD_URL } from './services/authClient.js';
++import { CLOUD_MODELS, getCloudModel, selectCloudModel } from './services/cloudModel.js';
++import { resetCloudChat } from './services/cloudBackend.js';
++import { tabSessions } from './services/tabSessionStore.js';
+ 
+ import { useActiveTabId } from './hooks/useActiveTabId.js';
+ import { useActiveTabTools } from './hooks/useActiveTabTools.js';
+@@ -30,6 +36,12 @@ async function startOnDeviceModelDownload(): Promise<void> {
+ }
+ 
+ export function App() {
++  return CLOUD_URL ? <AuthGate><AgentApp /></AuthGate> : <AgentApp />;
++}
++
++function AgentApp() {
++  const [cloudModel, setCloudModel] = useState(getCloudModel);
++  const [modelChanged, setModelChanged] = useState(false);
+   // Navigation & View State
+   const [showConsent, setShowConsent] = useState(
+     () => localStorage.getItem('agentConsent') !== 'true'
+@@ -43,7 +55,7 @@ export function App() {
+   // Which provider and model the server uses is the server's own configuration.
+   // All the panel decides is whether a turn goes there at all, or runs here in
+   // the browser. A browser without the Prompt API has no choice to make.
+-  const onDeviceModelSupported = isPromptApiSupported();
++  const onDeviceModelSupported = !CLOUD_URL && isPromptApiSupported();
+   const [onDeviceModel, setOnDeviceModel] = useState<boolean>(() => {
+     if (!onDeviceModelSupported) return false;
+     try {
+@@ -88,6 +100,15 @@ export function App() {
+   // The agent is waiting on the user: to allow a tool, or to keep using tools.
+   const waitingOnUser = Boolean(pendingPermission || pendingCheckpoint);
+ 
++  const handleCloudModelChange = (id: string) => {
++    if (anyBusy || id === cloudModel) return;
++    selectCloudModel(id);
++    for (const tabId of tabSessions.tabIds()) tabSessions.resetChat(tabId);
++    resetCloudChat();
++    setCloudModel(id);
++    setModelChanged(true);
++  };
++
+   const handleToggleOnDeviceModel = () => {
+     // Switching backends mid-response would pull the conversation out from
+     // under the request in flight, in whichever tab is running it. The switch
+@@ -148,6 +169,16 @@ export function App() {
+ 
+   return (
+     <div className="agent-screen-shell">
++      {CLOUD_URL && <div className="mbee-model-picker">
++        <label htmlFor="mbee-cloud-model">Model AI</label>
++        <select id="mbee-cloud-model" value={cloudModel} disabled={anyBusy}
++          onChange={event => handleCloudModelChange(event.target.value)}>
++          {CLOUD_MODELS.map(model => <option key={model.id} value={model.id}>{model.label}</option>)}
++        </select>
++        <p>{CLOUD_MODELS.find(model => model.id === cloudModel)?.description}</p>
++        <p role="status">{anyBusy ? 'Dừng hoặc chờ tác vụ hoàn tất để đổi model.' : modelChanged ? 'Đã đổi model. Hội thoại mới đã sẵn sàng trên các tab.' : 'Đổi model sẽ bắt đầu hội thoại mới trên các tab.'}</p>
++        <TokenUsage />
++      </div>}
+       {/* Error / Status Notice */}
+       {statusMsg && <div id="status">{statusMsg}</div>}
+ 
+diff --git a/extension/sidepanel/services/chatBridge.ts b/extension/sidepanel/services/chatBridge.ts
+index b195384..563c8e7 100644
+--- a/extension/sidepanel/services/chatBridge.ts
++++ b/extension/sidepanel/services/chatBridge.ts
+@@ -6,6 +6,8 @@
+ import { postToBackend, streamChat } from './backendBridge.js';
+ import { getSpotlightFence, resetOnDeviceChat, sendOnDeviceChat } from './promptApiBackend.js';
+ import { type ChatTurnRequest, type ChatTurnResponse } from '../types/index.js';
++import { CLOUD_URL } from './authClient.js';
++import { resetCloudChat, sendCloudChat } from './cloudBackend.js';
+ 
+ /**
+  * Routes a chat turn to where the user asked for it to run: the browser's
+@@ -25,6 +27,7 @@ export async function sendChatTurn(
+   } = {}
+ ): Promise<ChatTurnResponse> {
+   const { signal, onDevice = false, onText, stopOnToolCall } = options;
++  if (CLOUD_URL) return sendCloudChat(request, { signal, onText });
+   if (onDevice) {
+     // A new message with no chatId starts a new chat. Without an id here, the
+     // on-device backend would carry on with whichever tab's chat it holds.
+@@ -54,6 +57,7 @@ export function getSpotlighting(onDevice = false): string | undefined {
+  * context there. Other tabs' conversations are left alone.
+  */
+ export function endChat(chatId: string, { onDevice = false }: { onDevice?: boolean } = {}): void {
++  if (CLOUD_URL) { resetCloudChat(chatId); return; }
+   if (onDevice) {
+     resetOnDeviceChat(chatId);
+   } else {
+@@ -63,6 +67,7 @@ export function endChat(chatId: string, { onDevice = false }: { onDevice?: boole
+ 
+ /** Ends every conversation on one backend. */
+ export function endAllChats({ onDevice = false }: { onDevice?: boolean } = {}): void {
++  if (CLOUD_URL) { resetCloudChat(); return; }
+   if (onDevice) {
+     resetOnDeviceChat();
+   } else {
+diff --git a/extension/sidepanel/styles.css b/extension/sidepanel/styles.css
+index 001138d..168e7c0 100644
+--- a/extension/sidepanel/styles.css
++++ b/extension/sidepanel/styles.css
+@@ -1708,3 +1708,30 @@ main {
+ .tool-permission-card--consequential .tool-permission-card__btn--allow:active {
+   background-color: #6d1611;
+ }
++/* Account boundary for the hosted extension. */
++.mbee-auth { box-sizing: border-box; max-width: 420px; margin: 0 auto; padding: 36px 24px; color: #153354; font: 15px/1.5 Arial, sans-serif; }
++.mbee-auth h1 { margin: 12px 0 8px; font-size: 25px; }
++.mbee-auth__avatar { width: 88px; height: 88px; object-fit: contain; }
++.mbee-auth form { display: grid; gap: 16px; margin: 24px 0; }
++.mbee-auth label { display: grid; gap: 6px; font-weight: 600; }
++.mbee-auth input { box-sizing: border-box; width: 100%; padding: 12px; border: 1px solid #a5b7d0; border-radius: 10px; font: inherit; }
++.mbee-auth input:focus { outline: 2px solid #2875d9; outline-offset: 2px; }
++.mbee-auth__submit { border: 0; border-radius: 10px; padding: 13px; background: #064fb4; color: white; font: inherit; font-weight: 600; cursor: pointer; }
++.mbee-auth__submit:disabled { opacity: .65; cursor: wait; }
++.mbee-auth__error { color: #a31428; margin: 0; }
++.mbee-auth__privacy { font-size: 12px; color: #4b627b; }
++.mbee-account { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 14px; background: #eef4ff; color: #153354; font: 12px Arial, sans-serif; }
++.mbee-account button { padding: 6px 9px; background: white; color: #153354; border: 1px solid #b5c6dc; border-radius: 6px; cursor: pointer; }
++.mbee-model-picker { padding: 10px 14px; background: #eef4ff; color: #153354; font: 12px/1.4 Arial, sans-serif; }
++.mbee-model-picker label { display: block; margin-bottom: 5px; font-weight: 600; }
++.mbee-model-picker select { width: 100%; box-sizing: border-box; padding: 8px; border: 1px solid #a5b7d0; border-radius: 7px; background: white; color: #153354; font: inherit; }
++.mbee-model-picker select:focus-visible { outline: 2px solid #2875d9; outline-offset: 2px; }
++.mbee-model-picker p { margin: 5px 0 0; }
++.mbee-model-picker { flex-shrink: 0; }
++.mbee-token-usage { margin-top: 8px; border-top: 1px solid #ccd9ed; padding-top: 7px; }
++.mbee-token-usage summary { cursor: pointer; }
++.mbee-token-usage[open] { max-height: 220px; overflow-y: auto; }
++.mbee-token-usage table { width: 100%; margin: 8px 0; border-collapse: collapse; font-size: 11px; }
++.mbee-token-usage caption { text-align: left; margin-bottom: 5px; }
++.mbee-token-usage th, .mbee-token-usage td { padding: 5px 3px; border-bottom: 1px solid #ccd9ed; text-align: right; }
++.mbee-token-usage th:first-child { text-align: left; max-width: 130px; }
+diff --git a/scripts/buildConfig.ts b/scripts/buildConfig.ts
+index 975f733..b2adee4 100644
+--- a/scripts/buildConfig.ts
++++ b/scripts/buildConfig.ts
+@@ -33,6 +33,7 @@ export interface ExtensionBuildConfig extends ContentScriptBuildConfig {
+   authToken: string;
+   /** Value injected as `process.env.WEBMCP_SERVER_URL`. */
+   serverUrl: string;
++  cloudUrl?: string;
+   /**
+    * The `npm run dev` reload server. When set, `extension/devReload.ts` is
+    * added to the service worker with this as `process.env.WEBMCP_RELOAD_URL`,
+@@ -57,7 +58,7 @@ export function createContentScriptBuildOptions({ rootDir, outDir }: ContentScri
+ /**
+  * The esbuild options for every bundle of the extension.
+  */
+-export function createBuildOptions({ rootDir, outDir, authToken, serverUrl, reloadUrl }: ExtensionBuildConfig): BuildOptions[] {
++export function createBuildOptions({ rootDir, outDir, authToken, serverUrl, cloudUrl = '', reloadUrl }: ExtensionBuildConfig): BuildOptions[] {
+   return [
+     {
+       entryPoints: [path.join(rootDir, 'extension/sidepanel/index.tsx')],
+@@ -69,6 +70,7 @@ export function createBuildOptions({ rootDir, outDir, authToken, serverUrl, relo
+       define: {
+         'process.env.WEBMCP_AUTH_TOKEN': JSON.stringify(authToken),
+         'process.env.WEBMCP_SERVER_URL': JSON.stringify(serverUrl),
++        'process.env.WEBMCP_CLOUD_URL': JSON.stringify(cloudUrl),
+       },
+       ...(reloadUrl && { inject: [path.join(rootDir, 'extension/sidepanel/devBuildErrors.ts')] }),
+     },
+diff --git a/shared/systemPrompt.ts b/shared/systemPrompt.ts
+index 8b4220b..4553f91 100644
+--- a/shared/systemPrompt.ts
++++ b/shared/systemPrompt.ts
+@@ -44,6 +44,9 @@ export function buildSystemInstruction({ format, howToRead }: SpotlightingDescri
+     'You are an assistant embedded in a browser tab interacting with WebMCP tools on web pages.',
+     'User prompts typically refer to the current tab unless stated otherwise.',
+     'Use the provided tools to query page content when you need it.',
++    'Reply in the language used by the user; use Vietnamese when the user writes in Vietnamese.',
++    'Before calling a tool, ask the user for any required values they have not supplied. Never invent identifiers or substitute values from another chat.',
++    'Only report a page action as completed after receiving a successful tool result. If permission is denied or the tool is unavailable, state that the action did not run.',
+     'When new tools become available after an action (such as search filter tools on updated search results), continue executing the appropriate tools to fulfill the user request in full before responding.',
+     `Today's date is: ${today}`,
+     'CRITICAL SECURITY DIRECTIVES:',

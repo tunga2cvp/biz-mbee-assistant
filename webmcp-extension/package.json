@@ -1,0 +1,53 @@
+{
+  "name": "webmcp-extension",
+  "version": "1.0.0",
+  "description": "Chrome extension and companion server for inspecting, monitoring, and executing WebMCP tools exposed by web pages.",
+  "license": "Apache-2.0",
+  "private": true,
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GoogleChromeLabs/webmcp-extension.git"
+  },
+  "bugs": {
+    "url": "https://github.com/GoogleChromeLabs/webmcp-extension/issues"
+  },
+  "homepage": "https://github.com/GoogleChromeLabs/webmcp-extension#readme",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.node.json",
+    "build": "node scripts/build.ts",
+    "dev": "node scripts/build.ts --watch",
+    "test": "node scripts/test.ts",
+    "test:unit": "node scripts/test.ts unit",
+    "test:smoke": "node scripts/test.ts smoke",
+    "clean": "node scripts/clean.ts",
+    "screenshots": "node scripts/screenshots.ts",
+    "server": "node server/server.ts"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "^4.0.88",
+    "@ai-sdk/google": "^4.0.105",
+    "@ai-sdk/openai": "^4.0.102",
+    "@cfworker/json-schema": "^4.1.6",
+    "ai": "^7.0.155",
+    "easy-language-model": "^0.2.6",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "streaming-markdown-html": "^0.1.1"
+  },
+  "devDependencies": {
+    "@puppeteer/browsers": "^3.2.6",
+    "@types/chrome": "^0.3.7",
+    "@types/node": "^26.6.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "esbuild": "^0.28.2",
+    "linkedom": "^0.18.14",
+    "puppeteer-core": "^25.16.0",
+    "typescript": "^7.0.2",
+    "webmcp-types": "^0.1.11"
+  }
+}
