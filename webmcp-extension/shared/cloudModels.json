@@ -1,7 +1,11 @@
 {
   "defaultModel": "@cf/qwen/qwen3.8-27b",
   "models": [
-    { "id": "@cf/qwen/qwen3.8-27b", "label": "Qwen 3.8 27B", "description": "Mặc định · hội thoại và tác vụ nhiều bước", "adapter": "openai" },
-    { "id": "@cf/ibm-granite/granite-4.0-h-micro", "label": "Granite 4.0 H Micro · 3B", "description": "Model nhỏ · thử nghiệm gọi công cụ", "adapter": "openai" }
-  ]
+    { "id": "@cf/qwen/qwen3.8-27b", "label": "Qwen 3.8 27B", "description": "Đa dụng · tác vụ nhiều bước", "adapter": "openai", "badge": "Đa dụng", "inputNeuronsPerMillion": 40909, "outputNeuronsPerMillion": 290909 },
+    { "id": "@cf/ibm-granite/granite-4.0-h-micro", "label": "Granite 4.0 H Micro · 3B", "description": "Nhẹ nhất · hợp với yêu cầu ngắn và công cụ đơn giản", "adapter": "openai", "badge": "Tiết kiệm nhất", "inputNeuronsPerMillion": 1542, "outputNeuronsPerMillion": 10158 },
+    { "id": "@cf/google/gemma-4-26b-a4b-it", "label": "Gemma 4 · A4B", "description": "Cân bằng · hỗ trợ gọi công cụ · model mới thêm", "adapter": "openai", "badge": "Cân bằng", "inputNeuronsPerMillion": 9091, "outputNeuronsPerMillion": 27273 },
+    { "id": "@cf/zai-org/glm-4.7-flash", "label": "GLM 4.7 Flash", "description": "Tiết kiệm · hội thoại và gọi công cụ nhiều lượt · model mới thêm", "adapter": "openai", "badge": "Tiết kiệm", "inputNeuronsPerMillion": 5500, "outputNeuronsPerMillion": 36400 }
+  ],
+  "pricingCheckedDate": "2026-11-26",
+  "pricingSource": "https://developers.cloudflare.com/workers-ai/platform/pricing/"
 }

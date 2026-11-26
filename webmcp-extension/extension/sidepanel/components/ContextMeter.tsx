@@ -1,3 +1,4 @@
+import { uiText } from '../services/uiText.js';
 /**
  * Copyright 2026 Google LLC
  * SPDX-License-Identifier: Apache-2.0
@@ -21,9 +22,7 @@ export function ContextMeter({ used, window }: ContextUsage) {
   return (
     <div className="context-meter" title={`Context window: ${tokens}`}>
       {/* The visible label names the meter, so it needs no aria-label. */}
-      <label htmlFor={id} className="context-meter__name">
-        Context window
-      </label>
+      <label htmlFor={id} className="context-meter__name">{uiText("Context window", "Ngữ cảnh hội thoại")}</label>
       <meter
         id={id}
         className="context-meter__bar"

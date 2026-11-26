@@ -1,3 +1,4 @@
+import { uiText } from '../services/uiText.js';
 /**
  * Copyright 2026 Google LLC
  * SPDX-License-Identifier: Apache-2.0
@@ -63,7 +64,7 @@ export function AllowToolPermissionCard({
   // is reset or the panel closes, and that has to be on the button itself: a
   // `title` is not read out by a screen reader that already has a label, and
   // never appears on touch.
-  const alwaysAllowLabel = siteLabel ? `Allow on ${siteLabel} for this chat` : 'Allow for this chat';
+  const alwaysAllowLabel = siteLabel ? uiText(`Allow on ${siteLabel} for this chat`, `Cho phép trên ${siteLabel} trong cuộc trò chuyện này`) : uiText("Allow for this chat", "Cho phép trong cuộc trò chuyện này");
 
   // Belt and braces: the hook already withholds the callback for a consequential
   // tool, and the card refuses to draw the button even if one is handed to it.
@@ -90,12 +91,12 @@ export function AllowToolPermissionCard({
         </div>
         <div className="tool-permission-card__title-group">
           <h3 id="permission-title" className="tool-permission-card__title">
-            {consequential ? 'This action may be irreversible' : 'Allow tool actions'}
+            {consequential ? uiText("This action may be irreversible", "Thao tác có thể không hoàn tác được") : uiText("Allow tool actions", "Cho phép sử dụng công cụ?")}
           </h3>
           <p className="tool-permission-card__subtitle">
             {consequential
-              ? 'Check the details before you continue.'
-              : 'Let this tool complete task for you'}
+              ? uiText("Check the details before you continue.", "Kiểm tra thông tin trước khi tiếp tục.")
+              : uiText("Let this tool complete task for you", "Công cụ sẽ thực hiện yêu cầu thay bạn.")}
           </p>
         </div>
       </div>
@@ -107,16 +108,14 @@ export function AllowToolPermissionCard({
         </div>
         <div className="tool-permission-card__tool-desc-container">
           <span className="tool-permission-card__tool-desc">
-            {toolDescription || 'No description provided for this tool.'}
+            {toolDescription || uiText("No description provided for this tool.", "Trang chưa cung cấp mô tả cho công cụ này.")}
           </span>
         </div>
       </div>
 
       {consequential && (
         <p id="permission-warning" className="tool-permission-card__warning">
-          {siteLabel ? `${siteLabel} says this` : 'This'} action may not be possible to reverse
-          (such as a payment, order, message, or deletion). You will always be asked to confirm,
-          even if alerts are turned off.
+          {uiText(`${siteLabel ? `${siteLabel} says this` : 'This'} action may not be possible to reverse (such as a payment, order, message, or deletion). You will always be asked to confirm, even if alerts are turned off.`, `${siteLabel ? `${siteLabel} cho biết: ` : ''}thao tác có thể không hoàn tác được, như thanh toán, đặt hàng, gửi tin nhắn hoặc xóa dữ liệu. Bạn luôn phải xác nhận, kể cả khi tắt cảnh báo.`)}
         </p>
       )}
 
@@ -127,15 +126,13 @@ export function AllowToolPermissionCard({
           className="tool-permission-card__btn tool-permission-card__btn--deny"
           onClick={onDeny}
         >
-          {consequential ? 'Cancel' : 'Don’t allow'}
+          {consequential ? uiText("Cancel", "Hủy") : uiText("Don’t allow", "Không cho phép")}
         </button>
         <button
           type="button"
           className="tool-permission-card__btn tool-permission-card__btn--allow"
           onClick={onAllow}
-        >
-          Allow
-        </button>
+        >{uiText("Allow", "Cho phép")}</button>
       </div>
 
       {showAlwaysAllow && (
@@ -143,7 +140,7 @@ export function AllowToolPermissionCard({
           type="button"
           className="tool-permission-card__btn tool-permission-card__btn--always"
           onClick={onAlwaysAllow}
-          title={`Allow ${toolName}${siteLabel ? ` on ${siteLabel}` : ''} without asking again in this chat`}
+          title={uiText(`Allow ${toolName}${siteLabel ? ` on ${siteLabel}` : ''} without asking again in this chat`, `Cho phép ${toolName} trong cuộc trò chuyện này mà không hỏi lại`)}
         >
           {alwaysAllowLabel}
         </button>

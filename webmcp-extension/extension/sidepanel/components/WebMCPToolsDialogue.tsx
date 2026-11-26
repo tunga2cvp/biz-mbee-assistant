@@ -1,3 +1,4 @@
+import { uiText } from '../services/uiText.js';
 /**
  * Copyright 2026 Google LLC
  * SPDX-License-Identifier: Apache-2.0
@@ -36,16 +37,16 @@ export function WebMCPToolsDialogue({ domain, toolsCount, toolsList, onClose }: 
             <AutomationIcon size={16} color="#0842a0" />
           </div>
           <div className="tools-dialogue__titles">
-            <h3 id="webmcp-tools-dialog-title" className="tools-dialogue__title">Available WebMCP tools</h3>
-            <p className="tools-dialogue__subtitle">{domain} • {toolsCount} tools</p>
+            <h3 id="webmcp-tools-dialog-title" className="tools-dialogue__title">{uiText("Available WebMCP tools", "Công cụ WebMCP của trang")}</h3>
+            <p className="tools-dialogue__subtitle">{domain} • {toolsCount} {uiText('tools', 'công cụ')}</p>
           </div>
         </div>
         <button
           type="button"
           className="tools-dialogue__close-btn"
           onClick={onClose}
-          title="Close dialogue"
-          aria-label="Close dialogue"
+          title={uiText("Close dialogue", "Đóng danh sách công cụ")}
+          aria-label={uiText("Close dialogue", "Đóng danh sách công cụ")}
         >
           <CloseIcon size={18} color="#474747" />
         </button>
@@ -56,10 +57,8 @@ export function WebMCPToolsDialogue({ domain, toolsCount, toolsList, onClose }: 
       {/* Description Row */}
       <div className="tools-dialogue__desc-row">
         <p className="tools-dialogue__desc-text">
-          Available WebMCP tools on this page that enables AI agents to complete following tasks quicker.{' '}
-          <a href="#" className="tools-dialogue__link" onClick={(e) => e.preventDefault()}>
-            Learn more about tools and WebMCP
-          </a>
+          {uiText('Available WebMCP tools on this page that enables AI agents to complete following tasks quicker.', 'Trang đã công bố các công cụ sau để Mbee hỗ trợ bạn xử lý công việc.')} {' '}
+          <a href="#" className="tools-dialogue__link" onClick={(e) => e.preventDefault()}>{uiText("Learn more about tools and WebMCP", "Tìm hiểu về công cụ WebMCP")}</a>
         </p>
       </div>
 

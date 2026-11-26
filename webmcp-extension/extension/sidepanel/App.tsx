@@ -15,11 +15,13 @@ import { OnDeviceModelStatus } from './components/OnDeviceModelStatus.js';
 import { ContextMeter } from './components/ContextMeter.js';
 import { EditSquareIcon } from './components/Icons.js';
 import { AuthGate } from './screens/AuthGate.js';
-import { TokenUsage } from './components/TokenUsage.js';
+import { CloudControls } from './components/CloudControls.js';
 import { CLOUD_URL } from './services/authClient.js';
-import { CLOUD_MODELS, getCloudModel, selectCloudModel } from './services/cloudModel.js';
+import { getCloudModel, selectCloudModel } from './services/cloudModel.js';
 import { resetCloudChat } from './services/cloudBackend.js';
 import { tabSessions } from './services/tabSessionStore.js';
+import { toolSuggestions } from './services/toolSuggestions.js';
+import { uiText } from './services/uiText.js';
 
 import { useActiveTabId } from './hooks/useActiveTabId.js';
 import { useActiveTabTools } from './hooks/useActiveTabTools.js';
@@ -140,15 +142,16 @@ function AgentApp() {
   const domainTopic = domain && domain !== 'New Tab' ? domain : 'your tasks';
 
   // Welcome Action Chips
+  const pageSuggestions = toolSuggestions(tools);
   const welcomeActionChips =
     tools.length > 0 && domain
       ? tools.slice(0, 3).map((tool) => ({
           text: tool.description || tool.name,
         }))
       : [
-          { text: 'Learn more about WebMCP tools' },
-          { text: 'Make your website agent ready' },
-          { text: 'Read about Lighthouse audit' },
+          { text: CLOUD_URL ? 'Giải thích WebMCP dễ hiểu' : 'Learn more about WebMCP tools' },
+          { text: CLOUD_URL ? 'Gợi ý cách dùng Mbee hiệu quả' : 'Make your website agent ready' },
+          { text: CLOUD_URL ? 'Khi nào nên chọn model nhẹ?' : 'Read about Lighthouse audit' },
         ];
 
   const handleBadgeClick = () => {
@@ -168,17 +171,7 @@ function AgentApp() {
   };
 
   return (
-    <div className="agent-screen-shell">
-      {CLOUD_URL && <div className="mbee-model-picker">
-        <label htmlFor="mbee-cloud-model">Model AI</label>
-        <select id="mbee-cloud-model" value={cloudModel} disabled={anyBusy}
-          onChange={event => handleCloudModelChange(event.target.value)}>
-          {CLOUD_MODELS.map(model => <option key={model.id} value={model.id}>{model.label}</option>)}
-        </select>
-        <p>{CLOUD_MODELS.find(model => model.id === cloudModel)?.description}</p>
-        <p role="status">{anyBusy ? 'Dừng hoặc chờ tác vụ hoàn tất để đổi model.' : modelChanged ? 'Đã đổi model. Hội thoại mới đã sẵn sàng trên các tab.' : 'Đổi model sẽ bắt đầu hội thoại mới trên các tab.'}</p>
-        <TokenUsage />
-      </div>}
+    <div className={`agent-screen-shell${CLOUD_URL ? ' mbee-shell' : ''}`}>
       {/* Error / Status Notice */}
       {statusMsg && <div id="status">{statusMsg}</div>}
 
@@ -193,6 +186,7 @@ function AgentApp() {
           />
         ) : showSettings ? (
           <SettingsScreen
+            cloudSettings={CLOUD_URL ? <CloudControls model={cloudModel} busy={anyBusy} changed={modelChanged} onModelChange={handleCloudModelChange} /> : undefined}
             sensitiveActionAlerts={sensitiveActionAlerts}
             onToggleSensitiveActionAlerts={handleToggleSensitiveActionAlerts}
             onDeviceModel={onDeviceModel}
@@ -208,25 +202,31 @@ function AgentApp() {
               {messages.length === 0 && (
                 <div id="welcomeCard" className="welcome-card">
                   <div className="welcome-card__header">
-                    <h1 className="welcome-title">Hi there!</h1>
+                    <h1 className="welcome-title">{CLOUD_URL ? 'Mình có thể giúp gì?' : 'Hi there!'}</h1>
                   </div>
                   <p className="welcome-subtitle">
-                    {tools.length > 0
+                    {CLOUD_URL ? 'Nhắn yêu cầu của bạn để bắt đầu.' : tools.length > 0
                       ? `How can I help you with ${domainTopic}?`
                       : 'How can I help you?'}
                   </p>
 
-                  <div className="action-chips">
+                  {CLOUD_URL && pageSuggestions.length > 0 && <div className="action-chips" aria-label="Gợi ý từ công cụ của trang">
+                    {pageSuggestions.map(suggestion => <button key={suggestion.toolName} type="button" className="action-chip mbee-tool-suggestion"
+                      title={suggestion.toolName} onClick={() => setUserPrompt(suggestion.prompt)}>
+                      <span><strong>{suggestion.label}</strong><small>{suggestion.detail}</small></span><span className="mbee-chip-arrow" aria-hidden="true">↗</span>
+                    </button>)}
+                  </div>}
+                  {!CLOUD_URL && <div className="action-chips">
                     {welcomeActionChips.map((chip) => (
                       <button
                         key={chip.text}
                         className="action-chip"
                         onClick={() => setUserPrompt(chip.text)}
                       >
-                        <span>{chip.text}</span>
+                        <span>{chip.text}</span>{CLOUD_URL && <span className="mbee-chip-arrow" aria-hidden="true">↗</span>}
                       </button>
                     ))}
-                  </div>
+                  </div>}
                 </div>
               )}
 
@@ -239,8 +239,8 @@ function AgentApp() {
                       type="button"
                       className="chat-card__new-chat-btn"
                       onClick={handleReset}
-                      title="Start new chat"
-                      aria-label="Start new chat"
+                      title={uiText('Start new chat', 'Cuộc trò chuyện mới')}
+                      aria-label={uiText('Start new chat', 'Cuộc trò chuyện mới')}
                     >
                       <EditSquareIcon size={20} color="#012c6f" />
                     </button>
@@ -296,7 +296,7 @@ function AgentApp() {
                             ? 'initiation'
                             : 'running'
                         }
-                        statusText={!waitingOnUser && streamingText ? 'Writing...' : undefined}
+                        statusText={!waitingOnUser && streamingText ? uiText('Writing...', 'Đang trả lời…') : undefined}
                         activityLogs={activityLog}
                       />
                     )}
@@ -348,12 +348,12 @@ function AgentApp() {
                   domain: domain || 'New Tab',
                   faviconUrl: favicon,
                   hasTools: tools.length > 0,
-                  toolsCountLabel: `${tools.length} tools`,
+                  toolsCountLabel: CLOUD_URL ? `${tools.length} công cụ` : `${tools.length} tools`,
                   onToggleExpand: handleBadgeClick,
                 }}
                 textProps={{
                   value: userPrompt,
-                  placeholder: 'Ask Agent anything',
+                  placeholder: CLOUD_URL ? 'Bạn muốn Mbee giúp gì?' : 'Ask Agent anything',
                   onChange: (e) => setUserPrompt(e.target.value),
                   onSubmit: handleSendPrompt,
                 }}

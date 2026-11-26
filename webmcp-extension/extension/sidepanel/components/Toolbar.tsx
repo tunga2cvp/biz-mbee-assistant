@@ -1,3 +1,4 @@
+import { uiText } from '../services/uiText.js';
 /**
  * Copyright 2026 Google LLC
  * SPDX-License-Identifier: Apache-2.0
@@ -28,8 +29,8 @@ export function Toolbar({
           type="button"
           className="toolbar__settings-btn"
           onClick={onSettingsClick}
-          aria-label="Settings"
-          title="Settings"
+          aria-label={uiText("Settings", "Cài đặt")}
+          title={uiText("Settings", "Cài đặt")}
         >
           <SettingsIcon size={20} color="var(--color-on-surface-variant)" />
         </button>

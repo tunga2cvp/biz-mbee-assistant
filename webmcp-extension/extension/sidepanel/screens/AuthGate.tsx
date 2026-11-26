@@ -3,11 +3,13 @@ import { CLOUD_URL, clearAuthSession, login, readAuthSession, validateAuthSessio
 import { resetCloudChat } from '../services/cloudBackend.js';
 import { tabSessions } from '../services/tabSessionStore.js';
 import { tokenUsage } from '../services/tokenUsage.js';
+import { cloudQuota } from '../services/cloudQuota.js';
 
 function clearConversations() {
   for (const tabId of tabSessions.tabIds()) tabSessions.remove(tabId);
   resetCloudChat();
   tokenUsage.clear();
+  cloudQuota.clear();
 }
 export function AuthGate({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<AuthSession | null>(null);
@@ -52,7 +54,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   };
   if (checking) return <div className="mbee-auth"><p role="status">Đang xác thực phiên…</p></div>;
   if (session) return <>
-    <header className="mbee-account"><span>BIZ Mbee Assistant · {session.username}</span><button onClick={() => { clearConversations(); setSession(null); void clearAuthSession(); }}>Đăng xuất</button></header>
+    <header className="mbee-account"><div className="mbee-brand"><img src="../icons/mbee48.png" alt="" /><div><strong>BIZ Mbee</strong><span>Trợ lý WebMCP · {session.username}</span></div></div><button onClick={() => { clearConversations(); setSession(null); void clearAuthSession(); }} title="Đăng xuất tài khoản trợ lý">Đăng xuất</button></header>
     {children}
   </>;
   return <main className="mbee-auth">

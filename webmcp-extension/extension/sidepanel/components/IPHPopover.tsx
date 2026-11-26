@@ -1,3 +1,4 @@
+import { uiText } from '../services/uiText.js';
 /**
  * Copyright 2026 Google LLC
  * SPDX-License-Identifier: Apache-2.0
@@ -5,7 +6,7 @@
 
 import { SymbolIcon } from './Icons.js';
 
-const TITLE = 'Available WebMCP tools';
+const TITLE = uiText("Available WebMCP tools", "Công cụ WebMCP của trang");
 
 export interface IPHPopoverProps {
   onClose?: () => void;
@@ -38,7 +39,7 @@ export function IPHPopover({
           type="button"
           className="iph__close-btn"
           onClick={onClose}
-          aria-label="Close"
+          aria-label={uiText("Close", "Đóng")}
         >
           <SymbolIcon name="close" size={16} color="#ffffff" />
         </button>
@@ -46,8 +47,7 @@ export function IPHPopover({
         <div className="iph__content">
           <h4 className="iph__title">{TITLE}</h4>
           <p className="iph__desc">
-            Available WebMCP tools enables AI agents to perform actions quicker. You can always review
-            available tools on a page.
+            {uiText('Available WebMCP tools enables AI agents to perform actions quicker. You can always review available tools on a page.', 'Mbee có thể sử dụng các công cụ do trang công bố. Bạn có thể xem danh sách công cụ bất cứ lúc nào.')}
           </p>
           <a
             href="#"
@@ -56,9 +56,7 @@ export function IPHPopover({
               e.preventDefault();
               if (onViewActions) onViewActions();
             }}
-          >
-            Learn more about tools and WebMCP.
-          </a>
+          >{uiText("Learn more about tools and WebMCP.", "Tìm hiểu về công cụ WebMCP.")}</a>
         </div>
 
         <div className="iph__footer">
@@ -67,17 +65,13 @@ export function IPHPopover({
               type="button"
               className="iph__btn iph__btn--secondary"
               onClick={onViewActions}
-            >
-              View actions
-            </button>
+            >{uiText("View actions", "Xem công cụ")}</button>
           )}
           <button
             type="button"
             className="iph__btn iph__btn--primary"
             onClick={onGotIt}
-          >
-            Got it
-          </button>
+          >{uiText("Got it", "Đã hiểu")}</button>
         </div>
       </div>
       <div className="iph__pointer" aria-hidden="true"></div>

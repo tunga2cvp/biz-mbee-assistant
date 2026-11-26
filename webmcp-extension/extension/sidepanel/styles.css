@@ -1735,3 +1735,117 @@ main {
 .mbee-token-usage caption { text-align: left; margin-bottom: 5px; }
 .mbee-token-usage th, .mbee-token-usage td { padding: 5px 3px; border-bottom: 1px solid #ccd9ed; text-align: right; }
 .mbee-token-usage th:first-child { text-align: left; max-width: 130px; }
+
+/* BIZ Mbee: compact light panel, with chat taking the remaining height. */
+:root { --mbee-blue: #163bba; --mbee-ink: #18264b; --mbee-muted: #65728b; --mbee-line: #e4e9f2; }
+.mbee-account { flex-shrink: 0; min-height: 68px; padding: 12px 16px; background: #fff; border-bottom: 1px solid var(--mbee-line); font-family: var(--font-body); }
+.mbee-brand { display: flex; align-items: center; gap: 9px; min-width: 0; }
+.mbee-brand img { width: 36px; height: 36px; object-fit: contain; }
+.mbee-brand > div { display: grid; gap: 3px; min-width: 0; }
+.mbee-brand strong { font-size: 16px; color: var(--mbee-blue); letter-spacing: -.35px; }
+.mbee-brand span { font-size: 11px; color: var(--mbee-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mbee-account button { flex-shrink: 0; font: 11px var(--font-body); color: var(--mbee-muted); border: 0; background: #f3f5fa; border-radius: 8px; padding: 8px 9px; }
+.mbee-account button:hover { background: #eaf0ff; color: var(--mbee-blue); }
+.mbee-shell { flex: 1; height: auto; min-height: 0; padding: 12px; gap: 12px; border-radius: 0; background: #f6f8fc; color: var(--mbee-ink); }
+.mbee-controls { flex-shrink: 0; background: #fff; border: 1px solid var(--mbee-line); border-radius: 13px; max-height: max(160px, calc(100dvh - 240px)); overflow-x: hidden; overflow-y: auto; scrollbar-width: thin; box-shadow: 0 2px 6px #18264b03; }
+.mbee-controls .mbee-model-picker { padding: 11px 12px 9px; background: #fff; color: var(--mbee-ink); font: 12px/1.5 var(--font-body); }
+.mbee-model-label { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 7px; }
+.mbee-model-picker .mbee-model-label label { margin: 0; font-size: 10px; letter-spacing: 1px; color: var(--mbee-muted); font-weight: 700; }
+.mbee-model-badge { border-radius: 5px; padding: 2px 6px; background: #eef3ff; color: var(--mbee-blue); font-size: 10px; font-weight: 600; }
+.mbee-controls .mbee-model-picker select { height: 39px; border: 1px solid #d7deeb; border-radius: 8px; padding: 7px 9px; background: #fff; color: var(--mbee-ink); font: 500 13px var(--font-body); }
+.mbee-controls .mbee-model-picker p { font-size: 11px; color: var(--mbee-muted); margin-top: 6px; }
+.mbee-controls .mbee-model-picker .mbee-model-notice { color: var(--mbee-blue); }
+.mbee-quota { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 12px; border-top: 1px solid #f0f3f8; }
+.mbee-quota__label { min-width: 0; display: flex; align-items: center; gap: 7px; color: var(--mbee-muted); font-size: 11px; line-height: 16px; }
+.mbee-status-dot { flex-shrink: 0; width: 6px; height: 6px; background: #a5aec1; border-radius: 50%; }
+.mbee-quota--available .mbee-status-dot, .mbee-status-dot--ready { background: #14966a; }
+.mbee-quota--exhausted .mbee-status-dot { background: #d98718; }
+.mbee-quota--exhausted .mbee-quota__label { color: #955b10; }
+.mbee-quota button { display: inline-flex; align-items: center; justify-content: center; gap: 4px; border: 0; padding: 4px 0 4px 6px; flex-shrink: 0; background: transparent; color: var(--mbee-blue); font: 600 11px var(--font-body); cursor: pointer; }
+.mbee-quota button:disabled { opacity: .5; cursor: default; }
+.mbee-refresh { display: inline-block; font-size: 17px; line-height: 15px; }
+.mbee-refresh--spinning { animation: mbee-spin 1s linear infinite; }
+@keyframes mbee-spin { to { transform: rotate(360deg); } }
+.mbee-quota-note, .mbee-quota-error { padding: 0 12px 9px; margin: 0; font-size: 11px; line-height: 17px; color: #955b10; }
+.mbee-quota-error { color: #ae313b; }
+.mbee-activity { border-top: 1px solid var(--mbee-line); }
+.mbee-activity > summary { display: flex; justify-content: space-between; align-items: center; padding: 9px 12px; cursor: pointer; font-size: 11px; color: var(--mbee-muted); list-style: none; }
+.mbee-activity > summary::-webkit-details-marker { display: none; }
+.mbee-activity > summary:hover { color: var(--mbee-blue); background: #fafbff; }
+.mbee-activity[open] > summary > span:last-child { transform: rotate(180deg); }
+.mbee-activity__body { padding: 0 12px 12px; max-height: min(34vh, 300px); overflow-y: auto; scrollbar-width: thin; }
+.mbee-controls .mbee-token-usage { border-top: 0; margin: 0; padding: 5px 0; font-size: 11px; line-height: 17px; color: var(--mbee-muted); }
+.mbee-controls .mbee-token-usage[open] { max-height: none; overflow: visible; }
+.mbee-token-usage summary strong { color: var(--mbee-ink); }
+.mbee-token-usage table { table-layout: fixed; }
+.mbee-token-usage table th:first-child { width: 40%; overflow-wrap: anywhere; }
+.mbee-controls .mbee-token-usage td { overflow-wrap: anywhere; }
+.mbee-neuron-estimate { color: var(--mbee-blue); font-weight: 600; }
+.mbee-neuron-estimate span { color: var(--mbee-muted); font-weight: 400; }
+.mbee-quota-details { font-size: 11px; line-height: 17px; color: var(--mbee-muted); }
+.mbee-quota-details h3 { font-size: 11px; color: var(--mbee-ink); margin: 14px 0 5px; }
+.mbee-quota-details p { margin: 5px 0 8px; }
+.mbee-quota-details a { color: var(--mbee-blue); text-underline-offset: 2px; }
+.mbee-model-cost { width: 100%; border-collapse: collapse; }
+.mbee-model-cost td, .mbee-model-cost th { padding: 6px 3px; border-bottom: 1px solid var(--mbee-line); text-align: left; font-size: 11px; }
+.mbee-model-cost td:last-child, .mbee-model-cost th:last-child { text-align: right; }
+.mbee-model-cost .is-selected { color: var(--mbee-blue); background: #f5f8ff; }
+.mbee-shell .welcome-card { flex: 0; background: transparent; padding: 23px 6px 16px; gap: 7px; }
+.mbee-shell .welcome-title { font-size: 27px; line-height: 34px; letter-spacing: -.8px; font-weight: 600; color: var(--mbee-blue); }
+.mbee-shell .welcome-subtitle { margin: 4px 0 5px; font-size: 13px; line-height: 21px; font-weight: 400; color: var(--mbee-muted); }
+.mbee-welcome-context { display: flex; align-items: center; gap: 6px; margin: 3px 0; font-size: 10px; color: var(--mbee-muted); }
+.mbee-shell .action-chips { margin-top: 20px; gap: 8px; }
+.mbee-shell .action-chip { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 12px; border: 1px solid var(--mbee-line); border-radius: 10px; font-size: 12px; line-height: 18px; color: var(--mbee-ink); background: #fff; }
+.mbee-shell .action-chip:hover { background: #eef3ff; border-color: #c7d6fb; transform: none; }
+.mbee-chip-arrow { color: #8494b6; font-size: 15px; }
+.mbee-shell .chat-card { background: #fff; border-radius: 13px; padding: 12px; }
+.mbee-shell .chat-card__messages { gap: 18px; }
+.mbee-shell .user-bubble { background: #eef3ff; color: var(--mbee-ink); border-radius: 13px 13px 3px 13px; font-size: 13px; }
+.mbee-shell .ai-response { font-size: 13px; line-height: 1.7; color: var(--mbee-ink); }
+.mbee-shell .composer-footer { flex-shrink: 0; }
+.mbee-shell .chat-bubble { background: #fff; border: 1px solid #dbe3f0; border-radius: 13px; box-shadow: 0 3px 12px #18264b08; overflow: hidden; }
+.mbee-shell .attached-tab { border: 0; border-bottom: 1px solid #edf0f7; background: #fafbff; border-radius: 0; }
+.mbee-shell .chat-bubble__input-field { border: 0; background: #fff; border-radius: 0; }
+.mbee-shell .text-input__field { font: 13px var(--font-body); color: var(--mbee-ink); }
+.mbee-shell .text-input__field::placeholder { color: #8290a8; }
+.mbee-shell .toolbar { background: #fff; border-radius: 0; }
+.mbee-shell #chatStream { scrollbar-width: thin; scrollbar-color: #d3dceb transparent; }
+.mbee-shell .msg.error { border-radius: 10px; font-size: 12px; line-height: 19px; }
+.mbee-auth { width: 100%; margin: auto; padding: 32px 24px; color: var(--mbee-ink); font: 13px/1.6 var(--font-body); }
+.mbee-auth__avatar { width: 64px; height: 64px; }
+.mbee-auth h1 { color: var(--mbee-blue); font-size: 24px; letter-spacing: -.6px; }
+.mbee-auth input { border-color: #d2dceb; background: #fff; }
+.mbee-auth__submit { background: var(--mbee-blue); }
+@media (max-width: 340px) { .mbee-shell { padding: 9px; gap: 9px; } .mbee-account { padding: 10px 12px; } .mbee-brand strong { font-size: 15px; } .mbee-shell .welcome-title { font-size: 24px; } }
+@media (max-height: 600px) {
+  .mbee-account { min-height: 56px; padding-top: 8px; padding-bottom: 8px; }
+  .mbee-brand img { width: 28px; height: 28px; }
+  .mbee-shell .welcome-card { padding-top: 10px; }
+  .mbee-shell .action-chips { margin-top: 10px; }
+  .mbee-controls .mbee-model-picker { padding: 8px 10px; }
+  .mbee-controls .mbee-model-picker select { height: 34px; }
+  .mbee-controls .mbee-model-picker p { display: none; }
+  .mbee-model-label { margin-bottom: 4px; }
+  .mbee-activity__body { max-height: 75px; }
+  .mbee-shell .chat-card { gap: 6px; padding: 8px; }
+}
+@media (prefers-reduced-motion: reduce) { .mbee-refresh--spinning { animation: none; } }
+
+/* Keep the conversation clear; provider and usage controls live in settings. */
+.mbee-shell .welcome-card { flex: 1; justify-content: center; align-items: center; padding: 24px 12px 72px; text-align: center; }
+.mbee-shell .welcome-card__header { justify-content: center; }
+.mbee-shell .welcome-title { font-size: 24px; line-height: 32px; }
+.mbee-shell .welcome-subtitle { font-size: 12px; }
+.mbee-shell .chat-card { background: transparent; padding-left: 4px; padding-right: 4px; }
+.mbee-shell .text-input__field::placeholder { font-style: normal; }
+.mbee-shell .settings-view { min-height: 0; overflow-y: auto; scrollbar-width: thin; }
+.mbee-shell .settings-card { flex: 0; min-height: 100%; padding: 16px; border-radius: 12px; gap: 16px; }
+.mbee-shell .settings-title { font-size: 20px; }
+.mbee-shell .settings-card .mbee-controls { max-height: none; overflow: visible; box-shadow: none; }
+.mbee-shell .settings-card .mbee-activity__body { max-height: none; overflow: visible; }
+.mbee-shell .settings-card .mbee-model-picker p { display: block; }
+.mbee-shell .welcome-card:has(.action-chips) { padding-bottom: 24px; }
+.mbee-shell .mbee-tool-suggestion { text-align: left; }
+.mbee-tool-suggestion > span:first-child { min-width: 0; }
+.mbee-tool-suggestion strong { display: block; font-weight: 500; }
+.mbee-tool-suggestion small { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-top: 3px; color: var(--mbee-muted); font-size: 11px; line-height: 16px; overflow-wrap: anywhere; }

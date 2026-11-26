@@ -69,16 +69,14 @@
          },
 
       });
-    } catch {
-      return Response.json(
-        { error: "AI request failed; check Worker logs and quota." },
-        { status: 502 },
-      );
+    } catch (error) {
+      return inferenceErrorResponse(error, 'AI request failed; check Worker logs and quota.');
     }
   },
 };
 
-const WEBMCP_MODEL_CATALOG = {"defaultModel":"@cf/qwen/qwen3.8-27b","models":[{"id":"@cf/qwen/qwen3.8-27b","label":"Qwen 3.8 27B","description":"Mặc định · hội thoại và tác vụ nhiều bước","adapter":"openai"},{"id":"@cf/ibm-granite/granite-4.0-h-micro","label":"Granite 4.0 H Micro · 3B","description":"Model nhỏ · thử nghiệm gọi công cụ","adapter":"openai"}]};
+
+const WEBMCP_MODEL_CATALOG = {"defaultModel":"@cf/qwen/qwen3.8-27b","models":[{"id":"@cf/qwen/qwen3.8-27b","label":"Qwen 3.8 27B","description":"Đa dụng · tác vụ nhiều bước","adapter":"openai","badge":"Đa dụng","inputNeuronsPerMillion":40909,"outputNeuronsPerMillion":290909},{"id":"@cf/ibm-granite/granite-4.0-h-micro","label":"Granite 4.0 H Micro · 3B","description":"Nhẹ nhất · hợp với yêu cầu ngắn và công cụ đơn giản","adapter":"openai","badge":"Tiết kiệm nhất","inputNeuronsPerMillion":1542,"outputNeuronsPerMillion":10158},{"id":"@cf/google/gemma-4-26b-a4b-it","label":"Gemma 4 · A4B","description":"Cân bằng · hỗ trợ gọi công cụ · model mới thêm","adapter":"openai","badge":"Cân bằng","inputNeuronsPerMillion":9091,"outputNeuronsPerMillion":27273},{"id":"@cf/zai-org/glm-4.7-flash","label":"GLM 4.7 Flash","description":"Tiết kiệm · hội thoại và gọi công cụ nhiều lượt · model mới thêm","adapter":"openai","badge":"Tiết kiệm","inputNeuronsPerMillion":5500,"outputNeuronsPerMillion":36400}],"pricingCheckedDate":"2026-11-26","pricingSource":"https://developers.cloudflare.com/workers-ai/platform/pricing/"};
 
 // Generic inference endpoint: page tools are supplied by the extension.
 // No page callback or business action is executed by this Worker.
@@ -128,22 +126,23 @@ async function handleWebMcp(request, env) {
       ? WEBMCP_MODEL_CATALOG.defaultModel : body.model;
     if (!WEBMCP_MODEL_CATALOG.models.some(model => model.id === modelId)) return reply({ error: 'model_not_allowed' }, 400);
   }
-  const buffered = modelId === '@cf/ibm-granite/granite-4.0-h-micro';
+  const buffered = modelId !== '@cf/qwen/qwen3.8-27b';
   try {
     const result = await env.AI.run(modelId, {
       // Granite's chat template rejects null assistant content on tool-call turns.
       // Preserve its native calls and results; only represent absent text as ''.
-      messages: modelId === '@cf/ibm-granite/granite-4.0-h-micro'
+      messages: buffered
         ? body.messages.map(message => message.role === 'assistant' && message.content === null ? { ...message, content: '' } : message)
         : body.messages,
       ...(body.tools?.length ? { tools: body.tools, ...(body.tool_choice ? { tool_choice: body.tool_choice } : {}) } : {}),
       parallel_tool_calls: false,
-      ...(modelId === '@cf/ibm-granite/granite-4.0-h-micro' ? { max_tokens: 2048 } : { reasoning_effort: 'low', max_completion_tokens: 2048 }),
+      ...(modelId === '@cf/ibm-granite/granite-4.0-h-micro' ? { max_tokens: 2048 }
+        : { max_completion_tokens: 2048, ...(buffered ? {} : { reasoning_effort: 'low' }) }),
       stream: buffered ? false : stream,
       ...(stream && !buffered ? { stream_options: { include_usage: true } } : {}),
     });
-    // Granite currently rejects streaming requests with tool-result history.
-    // Its native non-streamed completion still carries actual structured calls.
+    // Buffer the small models' native completions, preserving structured calls
+    // and actual usage. Granite rejects streaming with tool-result history.
     if (stream && buffered) return nativeCompletionSse(result);
     if (stream) {
       return new Response(normalizeWebMcpSse(result), {
@@ -154,8 +153,52 @@ async function handleWebMcp(request, env) {
       });
     }
     return reply(result);
-  } catch {
-    return reply({ error: 'inference_failed' }, 502);
+  } catch (error) {
+    return inferenceErrorResponse(error, 'inference_failed');
+  }
+}
+
+// The binding currently reports quota exhaustion as AiError 4006; the REST
+// API documents 3036. Match the specific quota message too, not all 4006 errors.
+function inferenceErrorResponse(error, fallback) {
+  const message = typeof error?.message === 'string' ? error.message : '';
+  const quotaExceeded = Number(error?.code) === 3036 || /^3036\s*:/.test(message) ||
+    /used up your daily free allocation of [\d,]+ neurons/i.test(message);
+  if (!quotaExceeded) return Response.json({ error: fallback }, {
+    status: 502, headers: { 'Cache-Control': 'no-store' },
+  });
+  const now = Date.now();
+  const resetAt = (Math.floor(now / 86400000) + 1) * 86400000;
+  return Response.json({
+    error: {
+      code: 'ai_quota_exceeded', type: 'insufficient_quota', param: null,
+      message: 'Cloudflare Workers AI đã hết hạn mức miễn phí trong ngày (10.000 neurons). Hạn mức đặt lại lúc 07:00 giờ Việt Nam (00:00 UTC) hằng ngày. Đổi model không đặt lại hạn mức.',
+    },
+    retryAt: new Date(resetAt).toISOString(),
+  }, { status: 429, headers: {
+    'Cache-Control': 'no-store', 'Retry-After': String(Math.max(1, Math.ceil((resetAt - now) / 1000))),
+  } });
+}
+
+// A deliberate, tiny inference probe. No chat, page content or tool is sent.
+// The binding does not expose the account's remaining daily Neurons.
+async function checkExtensionQuota(env) {
+  const checkedAt = new Date().toISOString();
+  const resetAt = new Date((Math.floor(Date.now() / 86400000) + 1) * 86400000).toISOString();
+  const metadata = { checkedAt, resetAt, freeDailyNeurons: 10000, remainingNeurons: null, source: 'inference_probe' };
+  try {
+    const result = await env.AI.run('@cf/ibm-granite/granite-4.0-h-micro', {
+      messages: [{ role: 'user', content: 'OK' }], max_tokens: 1, stream: false,
+    });
+    if (!result || typeof result !== 'object' || result.error || !result.choices?.[0]?.message) {
+      return authJson({ ...metadata, status: 'unknown', message: 'Chưa xác nhận được hạn mức. Thử lại sau.' });
+    }
+    return authJson({ ...metadata, status: 'available' });
+  } catch (error) {
+    const response = inferenceErrorResponse(error, 'inference_failed');
+    return authJson({ ...metadata, status: response.status === 429 ? 'exhausted' : 'unknown',
+      ...(response.status !== 429 ? { message: 'Dịch vụ AI chưa phản hồi. Chưa xác định được hạn mức.' } : {}),
+    });
   }
 }
 
@@ -339,6 +382,11 @@ async function handleExtensionApi(request, env) {
   const session = await authenticateExtension(request, env);
   if (!session) return finish(authJson({ error: 'session_expired' }, 401));
   if (path === '/extension/auth/session' && request.method === 'GET') return finish(authJson(session));
+  if (path === '/extension/quota/check' && request.method === 'POST') {
+    // Share the chat budget so checks cannot bypass the inference rate limit.
+    if (!(await env.EXTENSION_RATE_LIMITER.limit({ key: `chat:${session.username}` })).success) return finish(authJson({ error: 'rate_limited' }, 429, { 'Retry-After': '60' }));
+    return finish(await checkExtensionQuota(env));
+  }
   if (path === '/extension/v1/chat/completions' && request.method === 'POST') {
     if (!(await env.EXTENSION_RATE_LIMITER.limit({ key: `chat:${session.username}` })).success) return finish(authJson({ error: 'rate_limited' }, 429, { 'Retry-After': '60' }));
     // Reuse validation and the native SSE adapter; the legacy POC secret is

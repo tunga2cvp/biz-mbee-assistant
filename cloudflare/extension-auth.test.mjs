@@ -123,3 +123,81 @@ test('Granite prose is never parsed into tool calls', async () => {
   assert.equal(body.choices[0].finish_reason, 'stop');
   assert.equal(body.choices[0].message.tool_calls, undefined);
 });
+
+test('authenticated quota failures retain CORS and the session stays valid', async () => {
+  const settings = env();
+  const session = await getSession(settings);
+  const origin = `chrome-extension://${'a'.repeat(32)}`;
+  settings.AI.run = async () => { throw Error('4006: you have used up your daily free allocation of 10,000 neurons'); };
+  const response = await worker.fetch(req('v1/chat/completions', {
+    model: '@cf/ibm-granite/granite-4.0-h-micro', messages: [{ role: 'user', content: 'hello' }], stream: true,
+  }, session.token, origin), settings);
+  assert.equal(response.status, 429);
+  assert.equal(response.headers.get('Access-Control-Allow-Origin'), origin);
+  assert.ok(Number(response.headers.get('Retry-After')) > 0);
+  assert.equal((await response.json()).error.code, 'ai_quota_exceeded');
+  assert.equal((await worker.fetch(req('auth/session', undefined, session.token), settings)).status, 200);
+});
+
+test('quota checks need authentication, send only a tiny fixed probe and never claim exact remaining neurons', async () => {
+  const settings = env();
+  let calls = 0;
+  settings.AI.run = async (model, input) => {
+    calls++;
+    assert.equal(model, '@cf/ibm-granite/granite-4.0-h-micro');
+    assert.deepEqual(input, { messages: [{ role: 'user', content: 'OK' }], max_tokens: 1, stream: false });
+    return { choices: [{ message: { content: 'OK' } }] };
+  };
+  assert.equal((await worker.fetch(req('quota/check', {}), settings)).status, 401);
+  assert.equal(calls, 0);
+  const session = await getSession(settings);
+  const response = await worker.fetch(req('quota/check', { messages: [{ content: 'private page content' }] }, session.token), settings);
+  const body = await response.json();
+  assert.equal(body.status, 'available');
+  assert.equal(body.remainingNeurons, null);
+  assert.equal(body.freeDailyNeurons, 10000);
+  assert.equal(body.source, 'inference_probe');
+  assert.equal(calls, 1);
+  assert.ok(!JSON.stringify(body).includes('private page content'));
+});
+
+test('quota checks distinguish exhausted quota from outages and enforce the chat rate limit', async () => {
+  const settings = env();
+  const session = await getSession(settings);
+  for (const [error, status] of [[Error('4006: you have used up your daily free allocation of 10,000 neurons'), 'exhausted'], [Error('upstream outage'), 'unknown']]) {
+    settings.AI.run = async () => { throw error; };
+    const response = await worker.fetch(req('quota/check', {}, session.token), settings);
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).status, status);
+  }
+  settings.AI.run = async () => ({ error: 'bad response' });
+  assert.equal((await (await worker.fetch(req('quota/check', {}, session.token), settings)).json()).status, 'unknown');
+  settings.EXTENSION_RATE_LIMITER.limit = async ({ key }) => { assert.equal(key, 'chat:testuser'); return { success: false }; };
+  settings.AI.run = () => { throw Error('must not infer'); };
+  assert.equal((await worker.fetch(req('quota/check', {}, session.token), settings)).status, 429);
+});
+
+test('new Gemma and GLM options preserve native tool calls and real token usage', async () => {
+  const settings = env();
+  const session = await getSession(settings);
+  for (const model of ['@cf/google/gemma-4-26b-a4b-it', '@cf/zai-org/glm-4.7-flash']) {
+    const call = { id: 'actual-call', type: 'function', function: { name: 'page_tool', arguments: '{"value":3}' } };
+    const usage = { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15 };
+    settings.AI.run = async (id, input) => {
+      assert.equal(id, model);
+      assert.equal(input.stream, false);
+      assert.equal(input.max_completion_tokens, 2048);
+      assert.equal(input.reasoning_effort, undefined);
+      assert.equal(input.tools[0].function.name, 'page_tool');
+      return { id: 'actual-id', model, choices: [{ message: { role: 'assistant', content: null, tool_calls: [call] }, finish_reason: 'tool_calls' }], usage };
+    };
+    const response = await worker.fetch(req('v1/chat/completions', {
+      model, messages: [{ role: 'user', content: 'do task' }], stream: true,
+      tools: [{ type: 'function', function: { name: 'page_tool', parameters: { type: 'object' } } }],
+    }, session.token), settings);
+    assert.equal(response.status, 200);
+    const events = (await response.text()).trim().split('\n\n').map(event => event.slice(6));
+    assert.equal(JSON.parse(events[0]).choices[0].delta.tool_calls[0].id, call.id);
+    assert.deepEqual(JSON.parse(events[1]).usage, usage);
+  }
+});

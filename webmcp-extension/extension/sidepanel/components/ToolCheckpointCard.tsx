@@ -1,3 +1,4 @@
+import { uiText } from '../services/uiText.js';
 /**
  * Copyright 2026 Google LLC
  * SPDX-License-Identifier: Apache-2.0
@@ -32,22 +33,18 @@ export function ToolCheckpointCard({ roundsUsed, maxRounds, onAllow, onDeny }: T
           <SymbolIcon name="pause_circle" size={24} color="var(--color-blue-title)" />
         </div>
         <div className="tool-permission-card__title-group">
-          <h3 id="checkpoint-title" className="tool-permission-card__title">
-            Keep going?
-          </h3>
-          <p className="tool-permission-card__subtitle">
-            The agent wants to use more tools for this request.
-          </p>
+          <h3 id="checkpoint-title" className="tool-permission-card__title">{uiText("Keep going?", "Tiếp tục thực hiện?")}</h3>
+          <p className="tool-permission-card__subtitle">{uiText("The agent wants to use more tools for this request.", "Mbee cần gọi thêm công cụ để hoàn thành yêu cầu.")}</p>
         </div>
       </div>
 
       <div id="checkpoint-details" className="tool-permission-card__box">
         <div className="tool-permission-card__tool-name-container">
-          <span className="tool-permission-card__tool-name">{`Used tools ${roundsUsed} times`}</span>
+          <span className="tool-permission-card__tool-name">{uiText(`Used tools ${roundsUsed} times`, `Đã gọi công cụ ${roundsUsed} lượt`)}</span>
         </div>
         <div className="tool-permission-card__tool-desc-container">
           <span className="tool-permission-card__tool-desc">
-            {`If you continue, it can use tools up to ${maxRounds} times in total, then it stops.`}
+            {uiText(`If you continue, it can use tools up to ${maxRounds} times in total, then it stops.`, `Nếu tiếp tục, Mbee sẽ gọi công cụ tối đa ${maxRounds} lượt tổng cộng rồi dừng.`)}
           </span>
         </div>
       </div>
@@ -57,16 +54,12 @@ export function ToolCheckpointCard({ roundsUsed, maxRounds, onAllow, onDeny }: T
           type="button"
           className="tool-permission-card__btn tool-permission-card__btn--deny"
           onClick={onDeny}
-        >
-          Stop
-        </button>
+        >{uiText("Stop", "Dừng")}</button>
         <button
           type="button"
           className="tool-permission-card__btn tool-permission-card__btn--allow"
           onClick={onAllow}
-        >
-          Continue
-        </button>
+        >{uiText("Continue", "Tiếp tục")}</button>
       </div>
     </div>
   );

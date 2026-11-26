@@ -1,13 +1,15 @@
+import { uiText } from '../services/uiText.js';
 /**
  * Copyright 2026 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useId } from 'react';
+import { useId, type ReactNode } from 'react';
 import { CloseIcon, DeviceIcon, ShieldIcon } from '../components/Icons.js';
 import { Switch } from '../components/Switch.js';
 
 export interface SettingsScreenProps {
+  cloudSettings?: ReactNode;
   sensitiveActionAlerts: boolean;
   onToggleSensitiveActionAlerts: () => void;
   onDeviceModel: boolean;
@@ -23,6 +25,7 @@ export interface SettingsScreenProps {
  * Presents settings options, currently featuring the Sensitive action alerts permission toggle.
  */
 export function SettingsScreen({
+  cloudSettings,
   sensitiveActionAlerts,
   onToggleSensitiveActionAlerts,
   onDeviceModel,
@@ -41,37 +44,38 @@ export function SettingsScreen({
       <div className="settings-card">
         {/* Header */}
         <div className="settings-card__header">
-          <h1 className="settings-title">Settings</h1>
+          <h1 className="settings-title">{cloudSettings ? 'Cài đặt' : uiText("Settings", "Cài đặt")}</h1>
           <button
             type="button"
             className="settings-close-btn"
             onClick={onClose}
-            aria-label="Close settings"
-            title="Close settings"
+            aria-label={uiText("Close settings", "Đóng cài đặt")}
+            title={uiText("Close settings", "Đóng cài đặt")}
           >
             <CloseIcon size={20} color="var(--color-blue-title)" />
           </button>
         </div>
 
+        {cloudSettings}
         {/* Permissions Section */}
         <div className="settings-section">
-          <h2 className="settings-section__title">Permissions</h2>
+          <h2 className="settings-section__title">{cloudSettings ? 'Quyền thao tác' : uiText("Permissions", "Quyền thao tác")}</h2>
 
           <div className="settings-item">
             <div className="settings-item__icon">
               <ShieldIcon size={24} color="var(--color-on-surface-variant)" />
             </div>
             <div className="settings-item__content">
-              <span className="settings-item__title">Sensitive action alerts</span>
+              <span className="settings-item__title">{cloudSettings ? 'Hỏi trước khi thao tác' : uiText("Sensitive action alerts", "Hỏi trước khi thao tác")}</span>
               <p id={alertsDescId} className="settings-item__desc">
-                Get a prompt before tools make changes to your data or accounts. Some external tools may not support this.
+                {cloudSettings ? 'Xin phép trước khi công cụ thay đổi dữ liệu hoặc tài khoản của bạn.' : 'Get a prompt before tools make changes to your data or accounts. Some external tools may not support this.'}
               </p>
             </div>
             <div className="settings-item__control">
               <Switch
                 checked={sensitiveActionAlerts}
                 onChange={onToggleSensitiveActionAlerts}
-                aria-label="Sensitive action alerts"
+                aria-label={uiText("Sensitive action alerts", "Hỏi trước khi thao tác")}
                 aria-describedby={alertsDescId}
               />
             </div>
@@ -79,8 +83,8 @@ export function SettingsScreen({
         </div>
 
         {/* Model Section */}
-        <div className="settings-section">
-          <h2 className="settings-section__title">Model</h2>
+        {!cloudSettings && <div className="settings-section">
+          <h2 className="settings-section__title">{uiText("Model", "Mô hình AI")}</h2>
 
           <div className="settings-item">
             <div className="settings-item__icon">
@@ -109,7 +113,7 @@ export function SettingsScreen({
               />
             </div>
           </div>
-        </div>
+        </div>}
       </div>
     </div>
   );

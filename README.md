@@ -1,6 +1,6 @@
 # BIZ Mbee Assistant
 
-Tiện ích Chrome thử nghiệm WebMCP do cá nhân phát triển. Phiên bản mới nhất trong source: **1.2.1**.
+Tiện ích Chrome thử nghiệm WebMCP do cá nhân phát triển. Phiên bản mới nhất trong source: **1.3.1**.
 
 [Chrome Web Store](https://chromewebstore.google.com/detail/biz-mbee-assistant/opifljgebjckcihkflechmdolimljfln):
 ngày 25/11/2026 đã xác nhận **1.1.0 công khai**; bản cập nhật **1.2.1 đang chờ Google duyệt**,
@@ -14,6 +14,11 @@ tự động xuất bản khi được chấp thuận.
 
 Website cần tích hợp WebMCP. Bản này chưa có chức năng đọc toàn bộ nội dung DOM hoặc tự bấm nút
 trên các trang không công bố công cụ. Tài khoản trợ lý tách biệt với tài khoản của website.
+
+Bản 1.3.1 Việt hóa giao diện và gợi ý tối đa ba tác vụ từ công cụ WebMCP của trang.
+Chọn mô hình, quota và thống kê nằm trong Cài đặt. Hỗ trợ Qwen, Granite, Gemma 4 A4B và GLM 4.7 Flash.
+Worker `c3c47479` đã triển khai endpoint kiểm tra quota; không báo số neurons còn lại khi chưa có dữ liệu chính xác.
+Xem [ghi chú phát hành](store/RELEASE-1.3.1.md).
 
 ## Cấu trúc
 
@@ -82,3 +87,6 @@ mã nguồn theo Apache-2.0, xem `LICENSE` và `webmcp-extension/LICENSE`.
 Nguồn hình ảnh và quá trình chỉnh sửa được ghi trong `store/asset-source.json`.
 
 Xem `HUONG-DAN.md` để cài thử và `store/` để theo dõi hồ sơ phát hành.
+
+Kiểm tra bản 1.3.1 ngày 26/11/2026: typecheck, 232 unit tests, 21 Worker tests và kiểm thử giao diện ở bốn kích thước panel đạt.
+Phản hồi model trong bài kiểm thử giao diện là dữ liệu mô phỏng; các model mới chưa được kiểm thử inference thành công vì hết quota.

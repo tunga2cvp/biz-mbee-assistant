@@ -128,6 +128,11 @@ async function handleExtensionApi(request, env) {
   const session = await authenticateExtension(request, env);
   if (!session) return finish(authJson({ error: 'session_expired' }, 401));
   if (path === '/extension/auth/session' && request.method === 'GET') return finish(authJson(session));
+  if (path === '/extension/quota/check' && request.method === 'POST') {
+    // Share the chat budget so checks cannot bypass the inference rate limit.
+    if (!(await env.EXTENSION_RATE_LIMITER.limit({ key: `chat:${session.username}` })).success) return finish(authJson({ error: 'rate_limited' }, 429, { 'Retry-After': '60' }));
+    return finish(await checkExtensionQuota(env));
+  }
   if (path === '/extension/v1/chat/completions' && request.method === 'POST') {
     if (!(await env.EXTENSION_RATE_LIMITER.limit({ key: `chat:${session.username}` })).success) return finish(authJson({ error: 'rate_limited' }, 429, { 'Retry-After': '60' }));
     // Reuse validation and the native SSE adapter; the legacy POC secret is

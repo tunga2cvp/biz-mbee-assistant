@@ -65,11 +65,8 @@
          },
 
       });
-    } catch {
-      return Response.json(
-        { error: "AI request failed; check Worker logs and quota." },
-        { status: 502 },
-      );
+    } catch (error) {
+      return inferenceErrorResponse(error, 'AI request failed; check Worker logs and quota.');
     }
   },
 };

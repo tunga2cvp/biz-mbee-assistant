@@ -43,5 +43,15 @@
   "submittedVersion": "1.2.1",
   "packageSha256": "E54E42AE66A50F2FEE858881A6CDAC4E90D3C84674F2A3EFB8E27077E71846BB",
   "gitHubRepository": "https://github.com/tunga2cvp/biz-mbee-assistant",
-  "gitHubVisibility": "private"
+  "gitHubVisibility": "public",
+  "workerQuotaFixVersion": "b2e7ddef",
+  "localBuildReloaded": false,
+  "quotaCheckedDate": "2026-11-26",
+  "quotaNextReset": "2026-11-27T00:00:00Z",
+  "workerUiModelsQuotaVersion": "c3c47479",
+  "workerQuotaEndpointDeployed": true,
+  "workerQuotaEndpointVerified": "2026-11-26T14:34:24Z",
+  "localBuildVersion": "1.3.1",
+  "localBuildPackage": "artifacts/BIZ-Mbee-Assistant-1.3.1.zip",
+  "localBuildSha256": "843F71135E325477634F35F3D6D4115E565F1F7DDF04E6CFA23687B81BF53C36"
 }

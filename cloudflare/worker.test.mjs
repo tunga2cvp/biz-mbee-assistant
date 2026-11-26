@@ -64,3 +64,43 @@ test('existing message endpoint still uses its original prompt and response', as
   } } });
   assert.deepEqual(await response.json(), { response: 'legacy response' });
 });
+
+test('AI daily quota errors report the next UTC reset without leaking provider details', async () => {
+  for (const providerError of [
+    Error("4006: you have used up your daily free allocation of 10,000 neurons, please upgrade to Cloudflare's Workers Paid plan if you would like to continue usage. private-provider-detail"),
+    Object.assign(Error('account limited'), { code: 3036 }),
+    Error('3036: account limited'),
+  ]) {
+    const response = await worker.fetch(request({ messages: [{ role: 'user', content: 'hello' }], stream: true }), {
+      POC_TOKEN: token, AI: { run: async () => { throw providerError; } },
+    });
+    assert.equal(response.status, 429);
+    assert.equal(response.headers.get('Cache-Control'), 'no-store');
+    const retry = Number(response.headers.get('Retry-After'));
+    assert.ok(retry >= 1 && retry <= 86400);
+    const body = await response.json();
+    assert.equal(body.error.code, 'ai_quota_exceeded');
+    assert.equal(body.error.type, 'insufficient_quota');
+    assert.match(body.error.message, /07:00/);
+    const reset = new Date(body.retryAt);
+    assert.equal(reset.getUTCHours(), 0);
+    assert.ok(Math.abs(reset.getTime() - Date.now() - retry * 1000) < 2000);
+    assert.ok(!JSON.stringify(body).includes('private-provider-detail'));
+  }
+});
+
+test('other provider errors remain 502 rather than being mislabeled as exhausted quota', async () => {
+  const response = await worker.fetch(request({ messages: [{ role: 'user', content: 'hello' }] }), {
+    POC_TOKEN: token, AI: { run: async () => { throw Error('4006: a different provider failure'); } },
+  });
+  assert.equal(response.status, 502);
+  assert.deepEqual(await response.json(), { error: 'inference_failed' });
+});
+
+test('legacy message endpoint also distinguishes the daily AI quota', async () => {
+  const response = await worker.fetch(new Request('https://example.test/', {
+    method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: JSON.stringify({ message: 'hello' }),
+  }), { POC_TOKEN: token, AI: { run: async () => { throw Error('4006: you have used up your daily free allocation of 10,000 neurons'); } } });
+  assert.equal(response.status, 429);
+  assert.equal((await response.json()).error.code, 'ai_quota_exceeded');
+});

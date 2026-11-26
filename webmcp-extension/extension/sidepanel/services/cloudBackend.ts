@@ -6,6 +6,7 @@ import { CLOUD_URL, clearAuthSession, readAuthSession } from './authClient.js';
 import { getCloudModel } from './cloudModel.js';
 import { toolArgumentObject } from '../../../shared/toolArguments.js';
 import { tokenUsage } from './tokenUsage.js';
+import { cloudQuota } from './cloudQuota.js';
 import { UserFacingError, type ChatTurnRequest, type ChatTurnResponse } from '../types/index.js';
 
 const histories = new Map<string, ModelMessage[]>();
@@ -31,6 +32,7 @@ export async function sendCloudChat(request: ChatTurnRequest, options: { signal?
   controllers.set(chatId, controller);
   const currentGeneration = generation;
   const usageEpoch = tokenUsage.getEpoch();
+  const quotaEpoch = cloudQuota.getEpoch();
   let inferenceAccepted = false;
   let usageRecorded = false;
   const modelId = chatModels.get(chatId) || getCloudModel();
@@ -40,8 +42,16 @@ export async function sendCloudChat(request: ChatTurnRequest, options: { signal?
     fetch: async (url, init) => {
       const response = await fetch(url, init);
       inferenceAccepted = response.ok;
+      if (response.ok) cloudQuota.report('available', undefined, quotaEpoch);
       if (response.status === 401) { await clearAuthSession(); throw new UserFacingError('Phiên đăng nhập đã hết hạn.'); }
-      if (response.status === 429) throw new UserFacingError('Đã đạt giới hạn yêu cầu. Vui lòng thử lại sau một phút.');
+      if (response.status === 429) {
+        const body = await response.clone().json().catch(() => null);
+        if (body?.error?.code === 'ai_quota_exceeded') {
+          cloudQuota.report('exhausted', body.retryAt, quotaEpoch);
+          throw new UserFacingError(typeof body.error.message === 'string' ? body.error.message : 'Cloudflare đã hết hạn mức AI trong ngày. Thử lại sau 07:00 giờ Việt Nam.');
+        }
+        throw new UserFacingError('Đã đạt giới hạn yêu cầu. Vui lòng thử lại sau một phút.');
+      }
       if (response.status === 400) {
         const body = await response.clone().json().catch(() => null);
         if (body?.error === 'model_not_allowed') throw new UserFacingError('Model này chưa được bật trên máy chủ. Vui lòng chọn Qwen.');

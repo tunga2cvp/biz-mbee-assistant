@@ -11,7 +11,7 @@ if (new URL(cloudUrl).protocol !== 'https:') throw Error('Public build requires 
 fs.mkdirSync(outDir, { recursive: true });
 copyStaticFiles(rootDir, outDir);
 const manifest = JSON.parse(fs.readFileSync(path.join(outDir, 'manifest.json'), 'utf8'));
-Object.assign(manifest, { name: 'BIZ Mbee Assistant', short_name: 'Mbee Assistant', version: '1.2.1',
+Object.assign(manifest, { name: 'BIZ Mbee Assistant', short_name: 'Mbee Assistant', version: '1.3.1',
   description: 'Trợ lý WebMCP có đăng nhập: chat tiếng Việt, khám phá công cụ của trang và thực hiện sau khi được cho phép.',
   homepage_url: `${cloudUrl}/privacy`,
 });

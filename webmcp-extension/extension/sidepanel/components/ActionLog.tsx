@@ -1,3 +1,4 @@
+import { uiText } from '../services/uiText.js';
 /**
  * Copyright 2026 Google LLC
  * SPDX-License-Identifier: Apache-2.0
@@ -19,7 +20,7 @@ export interface ActionLogProps {
  * Format activity/tool name into human readable label
  */
 export function formatLogLabel(name: string): string {
-  if (!name) return 'Thinking...';
+  if (!name) return uiText("Thinking...", "Đang xử lý…");
   const clean = name
     .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
     .replace(/[_-]+/g, ' ')
@@ -41,16 +42,16 @@ export function ActionLog({
   let headerLabel = statusText;
   if (!headerLabel) {
     if (status === 'initiation') {
-      headerLabel = 'Just a sec...';
+      headerLabel = uiText("Just a sec...", "Đang xử lý…");
     } else if (status === 'running') {
       const activeEntry = activityLogs[0];
       headerLabel = activeEntry
         ? `${formatLogLabel(activeEntry.name)}...`
-        : 'Thinking...';
+        : uiText("Thinking...", "Đang xử lý…");
     } else if (status === 'permission') {
-      headerLabel = 'Waiting for permission';
+      headerLabel = uiText("Waiting for permission", "Đang chờ bạn cho phép");
     } else if (status === 'completed') {
-      headerLabel = 'Show thinking';
+      headerLabel = uiText("Show thinking", "Xem các bước thực hiện");
     }
   }
 
@@ -114,7 +115,7 @@ export function ActionLog({
                   )}
                 </div>
                 <span className="action-log__item-label">
-                  {status === 'completed' ? 'Thinking process completed' : 'Thinking...'}
+                  {status === 'completed' ? uiText("Thinking process completed", "Đã xử lý xong") : uiText("Thinking...", "Đang xử lý…")}
                 </span>
               </div>
             )}

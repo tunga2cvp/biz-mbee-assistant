@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { uiText } from '../services/uiText.js';
 import {
   type Dispatch,
   type SetStateAction,
@@ -588,7 +589,7 @@ export function useAgentSession(
             showStreamingText('');
             if (summary?.chatId) internals.chatId = summary.chatId;
             const summaryText = summary?.functionCalls?.length ? '' : summary?.text?.trim();
-            const reply = summaryText || `Stopped after attempting ${attemptedCalls} tool call${attemptedCalls === 1 ? '' : 's'}.`;
+            const reply = summaryText || uiText(`Stopped after attempting ${attemptedCalls} tool call${attemptedCalls === 1 ? '' : 's'}.`, `Đã dừng sau ${attemptedCalls} lượt gọi công cụ.`);
             persistTurnOutput(tabId, reply, onDeviceModelRef.current);
             // End the tool loop even if the summary asks for more calls.
             break;
@@ -674,7 +675,7 @@ export function useAgentSession(
         text:
           err instanceof UserFacingError
             ? err.message
-            : 'Something went wrong while processing your request. Please try again.',
+            : uiText('Something went wrong while processing your request. Please try again.', 'Không thể xử lý yêu cầu lúc này. Vui lòng thử lại.'),
       });
       if (internals.chatId && !atLimit) {
         endChat(internals.chatId, { onDevice: onDeviceModelRef.current });

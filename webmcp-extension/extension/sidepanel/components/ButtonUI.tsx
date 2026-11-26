@@ -4,6 +4,7 @@
  */
 
 import { PlayArrowIcon, SquareStopIcon } from './Icons.js';
+import { uiText } from '../services/uiText.js';
 
 export type ButtonVariant = 'live' | 'send' | 'stop';
 
@@ -20,7 +21,7 @@ export function ButtonUI({ variant = 'live', onClick }: ButtonUIProps) {
   const isStop = variant === 'stop';
 
   return (
-    <button type="button" className="button-ui" onClick={onClick} aria-label={variant}>
+    <button type="button" className="button-ui" data-action={variant} onClick={onClick} aria-label={uiText(variant, isStop ? 'Dừng trả lời' : 'Gửi yêu cầu')}>
       <div className="button-ui__icon-wrapper">
         {isStop ? (
           <SquareStopIcon size={12} color="#ffffff" />
