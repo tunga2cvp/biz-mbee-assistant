@@ -3,7 +3,7 @@
 Tiện ích Chrome thử nghiệm WebMCP do cá nhân phát triển. Phiên bản mới nhất trong source: **1.3.1**.
 
 [Chrome Web Store](https://chromewebstore.google.com/detail/biz-mbee-assistant/opifljgebjckcihkflechmdolimljfln):
-ngày 25/11/2026 đã xác nhận **1.1.0 công khai**; bản cập nhật **1.2.1 đang chờ Google duyệt**,
+ngày 26/11/2026 đã xác nhận **1.2.1 công khai**; bản cập nhật **1.3.1 đã gửi và đang chờ Google duyệt**,
 tự động xuất bản khi được chấp thuận.
 
 - Đăng nhập bằng tài khoản trợ lý do chủ Worker cấp.
